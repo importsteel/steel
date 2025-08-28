@@ -1,0 +1,49 @@
+import struct
+from typing import Literal
+
+from .base import Field
+
+
+INTEGER_FORMATS = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
+FLOAT_FORMATS =   {        2: 'e', 4: 'f', 8: 'd'}
+
+
+class Integer(Field[int]):
+    size: int
+    signed: bool
+    endianness: str
+
+    format: str
+
+    def __init__(self,
+                 size: Literal[1, 2, 4, 8],
+                 signed: bool = False,
+                 endianness: Literal['<', '>'] = '<',
+                ):
+        self.size = size
+        self.signed = signed
+        self.endianness = endianness
+        format = INTEGER_FORMATS[self.size]
+        if signed:
+            format = format.lower()
+        self.format = f'{endianness}{format}'
+
+    def decode(self, value: bytes) -> int:
+        values = struct.unpack(self.format, value)
+        return int(values[0])
+
+    def encode(self, value: int) -> bytes:
+        return struct.pack(self.format, value)
+
+
+class Float(Field[float]):
+    def __init__(self, size: Literal[2, 4, 8]):
+        self.size = size
+        self.format = FLOAT_FORMATS[size]
+
+    def decode(self, value: bytes) -> float:
+        values = struct.unpack(self.format, value)
+        return float(values[0])
+
+    def encode(self, value: float) -> bytes:
+        return struct.pack(self.format, value)

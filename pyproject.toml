@@ -19,18 +19,12 @@ classifiers = [
 license = "BSD-3-Clause-No-Military-License"
 license-files = ["LICEN[CS]E*"]
 dependencies = [
-    "pytest>=8.4.1",
+    "mkdocs>=1.6.1",
 ]
 
 [project.urls]
 Homepage = "https://importsteel.org/"
 Issues = "https://github.com/gulopine/steel/issues"
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -39,10 +33,10 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "vcs"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"
-python_classes = "Test*"
-python_functions = "test_*"
-addopts = "-v --tb=short"
+[tool.mypy]
+strict = "true"
+packages = ["steel", "tests"]
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = "abstract,no-untyped-def"

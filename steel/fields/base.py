@@ -1,7 +1,16 @@
 from abc import abstractmethod
-from typing import Self, TypeVar, Optional
+from io import BufferedIOBase
+from typing import Optional, Self, TypeVar
 
 T = TypeVar('T')
+
+
+class ConfigurationError(RuntimeError):
+    pass
+
+
+class ValidationError(RuntimeError):
+    pass
 
 
 class Field[T]:
@@ -44,12 +53,39 @@ class Field[T]:
         # descriptor anyway. And if a value is *not* assigned to the instance
         # attribute, returning the field object itself is also the right thing
         # to do, matching Python's natural behavior without the descriptor.
-        print('accessing')
         return self
+
+    @abstractmethod
+    def validate(self, value: T) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+        raise NotImplementedError()
 
     @abstractmethod
     def decode(self, value: bytes) -> T:
         raise NotImplementedError()
 
+    @abstractmethod
     def encode(self, value: T) -> bytes:
         raise NotImplementedError()
+
+    def write(self, value: T, buffer: BufferedIOBase) -> int:
+        # read() methods must all be different in order to know when the value
+        # in the buffer is complete, but writing can be more consistent
+        # because the encoded value already defines how much data to write.
+        encoded = self.encode(value)
+        size = buffer.write(encoded)
+        return size
+
+
+class ExplicitlySizedField[T](Field[T]):
+    size: int
+
+    def __init__(self, /, size: int):
+        self.size = size
+
+    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+        encoded = buffer.read(self.size)
+        return self.decode(encoded), len(encoded)

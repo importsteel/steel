@@ -1,5 +1,7 @@
 from .base import (
-    Structure, # pyright: ignore[reportUnusedImport]
+    Structure as Structure,
 )
 
-from .fields import *
+from .fields import (
+    Field as Field,
+)

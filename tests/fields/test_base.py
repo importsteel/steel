@@ -24,4 +24,3 @@ class TestField(unittest.TestCase):
         # Test that the field does *not* get returned if an instance value is set
         instance = Structure(10)
         self.assertIsInstance(instance.value, int)
-

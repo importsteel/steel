@@ -12,7 +12,7 @@ class Bytes(Field[bytes]):
     def validate(self, value: bytes) -> None:
         size = len(value)
         if size != self.size:
-            raise ValidationError(f'Except {self.size} bytes; got {size}')
+            raise ValidationError(f"Except {self.size} bytes; got {size}")
 
     def read(self, buffer: BufferedIOBase) -> tuple[bytes, int]:
         value = buffer.read(self.size)
@@ -39,7 +39,7 @@ class FixedBytes(Bytes):
 
     def validate(self, value: bytes) -> None:
         if value != self.value:
-            raise ValidationError(f'Expected {self.value!r}; got {value!r}')
+            raise ValidationError(f"Expected {self.value!r}; got {value!r}")
 
     def read(self, buffer: BufferedIOBase) -> tuple[bytes, int]:
         value = buffer.read(self.size)

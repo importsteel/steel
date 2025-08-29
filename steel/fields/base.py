@@ -2,7 +2,7 @@ from abc import abstractmethod
 from io import BufferedIOBase
 from typing import Optional, Self, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ConfigurationError(RuntimeError):
@@ -20,7 +20,7 @@ class Field[T]:
     # native Python types, like str, int and float. Ultimately, the type
     # of the class attribute differs from the instance attribute, even
     # though type-checking tools can't recognize that difference.
-    # 
+    #
     # This __get__ method turns the field into a descriptor, so that code
     # runs whenever the attribute gets accessed, both as a class attribute
     # and as an instance attribute. This code can be understood and
@@ -28,7 +28,7 @@ class Field[T]:
     # type hints about how these attributes will behave. Specifically, the
     # return type(s) of this method will drive how type checkers see the
     # attributes in use elsewhere.
-    # 
+    #
     # There are two return types here:
     #  * Self represents the same type as the field itself. It's Field in
     #    this class, but Self will also reflect subclasses defined elsewhere.
@@ -44,7 +44,7 @@ class Field[T]:
         # later by using typing's Optional[] type). And T isn't known at the
         # time of the method's definition, so that only leaves Self, which is
         # thankfully easy to return directly.
-        # 
+        #
         # But this code has to actually run, and it will *always* return self.
         # It has nothing to do with T or the final attribute value. What makes
         # this work anyway is that Python will only call the __get__ method if

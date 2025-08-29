@@ -4,8 +4,9 @@ from typing import Literal
 from .base import ExplicitlySizedField, ValidationError
 
 
-INTEGER_FORMATS = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
-FLOAT_FORMATS   = {        2: 'e', 4: 'f', 8: 'd'}
+INTEGER_FORMATS = {1: "B", 2: "H", 4: "I", 8: "Q"}
+FLOAT_FORMATS = {2: "e", 4: "f", 8: "d"}
+
 
 class Integer(ExplicitlySizedField[int]):
     signed: bool
@@ -13,18 +14,19 @@ class Integer(ExplicitlySizedField[int]):
 
     format: str
 
-    def __init__(self,
-                 size: Literal[1, 2, 4, 8],
-                 signed: bool = False,
-                 endianness: Literal['<', '>'] = '<',
-                ):
+    def __init__(
+        self,
+        size: Literal[1, 2, 4, 8],
+        signed: bool = False,
+        endianness: Literal["<", ">"] = "<",
+    ):
         super().__init__(size=size)
         self.signed = signed
         self.endianness = endianness
         format = INTEGER_FORMATS[self.size]
         if signed:
             format = format.lower()
-        self.format = f'{endianness}{format}'
+        self.format = f"{endianness}{format}"
 
     def validate(self, value: int) -> None:
         max_value: int = 2 ** (self.size * 8) - 1
@@ -36,10 +38,10 @@ class Integer(ExplicitlySizedField[int]):
             min_value = -1 - max_value
 
         if value > max_value:
-            raise ValidationError(f'{value} is too high')
+            raise ValidationError(f"{value} is too high")
 
         if value < min_value:
-            raise ValidationError(f'{value} is too low')
+            raise ValidationError(f"{value} is too low")
 
     def decode(self, value: bytes) -> int:
         values = struct.unpack(self.format, value)
@@ -47,6 +49,7 @@ class Integer(ExplicitlySizedField[int]):
 
     def encode(self, value: int) -> bytes:
         return struct.pack(self.format, value)
+
 
 class Float(ExplicitlySizedField[float]):
     def __init__(self, size: Literal[2, 4, 8] = 4):

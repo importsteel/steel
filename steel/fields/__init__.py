@@ -1,1 +1,3 @@
-from .base import Field as Field # pyright: ignore[reportUnusedImport]
+from .base import (
+    Field as Field,
+)

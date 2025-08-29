@@ -1,7 +1,7 @@
 import struct
 from typing import Literal
 
-from .base import ConfigurationError, ExplicitlySizedField
+from .base import ExplicitlySizedField, ValidationError
 
 
 INTEGER_FORMATS = {1: 'B', 2: 'H', 4: 'I', 8: 'Q'}
@@ -36,10 +36,10 @@ class Integer(ExplicitlySizedField[int]):
             min_value = -1 - max_value
 
         if value > max_value:
-            raise ConfigurationError(f'{value} is too high')
+            raise ValidationError(f'{value} is too high')
 
         if value < min_value:
-            raise ConfigurationError(f'{value} is too low')
+            raise ValidationError(f'{value} is too low')
 
     def decode(self, value: bytes) -> int:
         values = struct.unpack(self.format, value)

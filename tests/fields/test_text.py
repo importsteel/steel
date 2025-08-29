@@ -3,38 +3,45 @@ from io import BytesIO
 
 from steel.fields.text import EncodedString, FixedLengthString, LenghIndexedString, TerminatedString
 from steel.fields.numbers import Integer
-from steel.fields.base import ConfigurationError
+from steel.fields.base import ConfigurationError, ValidationError
 
 
 class TestStringEncoding(unittest.TestCase):
     def test_ascii_encoding(self):
-        field = EncodedString(encoding='ascii') # pyright: ignore[reportAbstractUsage]
+        field = EncodedString(encoding='ascii')
         encoded = field.encode('hello')
         self.assertEqual(encoded, b'hello')
 
     def test_ascii_decoding(self):
-        field = EncodedString(encoding='ascii') # pyright: ignore[reportAbstractUsage]
+        field = EncodedString(encoding='ascii')
         decoded = field.decode(b'hello')
         self.assertEqual(decoded, 'hello')
 
     def test_utf8_encoding(self):
-        field = EncodedString(encoding='utf8') # pyright: ignore[reportAbstractUsage]
+        field = EncodedString(encoding='utf8')
         encoded = field.encode('héllo')
         self.assertEqual(encoded, b'h\xc3\xa9llo')
 
     def test_utf8_decoding(self):
-        field = EncodedString(encoding='utf8') # pyright: ignore[reportAbstractUsage]
+        field = EncodedString(encoding='utf8')
         decoded = field.decode(b'h\xc3\xa9llo')
         self.assertEqual(decoded, 'héllo')
 
     def test_emoji(self):
-        field = EncodedString(encoding='utf8') # pyright: ignore[reportAbstractUsage]
+        field = EncodedString(encoding='utf8')
         
         decoded = field.decode(b'\xf0\x9f\x9a\x80')
         self.assertEqual(decoded, '🚀')
         
         encoded = field.encode('🚀')
         self.assertEqual(encoded, b'\xf0\x9f\x9a\x80')
+
+    def test_validation(self):
+        field = EncodedString(encoding='ascii')
+        
+        field.validate('hello')
+        with self.assertRaises(ValidationError):
+            field.validate('héllo')
 
 
 class TestFixedLengthString(unittest.TestCase):

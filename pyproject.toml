@@ -19,6 +19,7 @@ classifiers = [
 license = "BSD-3-Clause-No-Military-License"
 license-files = ["LICEN[CS]E*"]
 dependencies = [
+    "coverage>=7.10.5",
     "mkdocs>=1.6.1",
 ]
 
@@ -32,6 +33,15 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.coverage.run]
+branch = "true"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+]
 
 [tool.mypy]
 strict = "true"

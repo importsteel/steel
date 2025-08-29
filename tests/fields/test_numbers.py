@@ -1,9 +1,36 @@
 import unittest
 import math
+from steel.fields.base import ValidationError
 from steel.fields.numbers import Integer, Float
 
 
 class TestInteger(unittest.TestCase):
+    def test_validate_number_too_big(self):
+        field = Integer(size=1, signed=False, endianness='>')
+
+        field.validate(255)
+        with self.assertRaises(ValidationError):
+            field.validate(256)
+
+        field = Integer(size=1, signed=True, endianness='>')
+
+        field.validate(127)
+        with self.assertRaises(ValidationError):
+            field.validate(128)
+
+    def test_validate_number_too_small(self):
+        field = Integer(size=1, signed=False, endianness='>')
+
+        field.validate(0)
+        with self.assertRaises(ValidationError):
+            field.validate(-1)
+
+        field = Integer(size=1, signed=True, endianness='>')
+
+        field.validate(-128)
+        with self.assertRaises(ValidationError):
+            field.validate(-129)
+
     def test_big_endian_encoding(self):
         field = Integer(size=4, endianness='>')
         encoded = field.encode(0x12345678)

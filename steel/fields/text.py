@@ -14,7 +14,7 @@ class EncodedString(ABC, Field[str]):
         try:
             value.encode(self.encoding)
         except UnicodeEncodeError as e:
-            raise ValidationError(f"{value} could be encoded: {e.reason}")
+            raise ValidationError(f'{value} could be encoded: {e.reason}')
 
     def decode(self, value: bytes) -> str:
         return value.decode(self.encoding)
@@ -26,12 +26,10 @@ class EncodedString(ABC, Field[str]):
 class FixedLengthString(EncodedString):
     size: int
 
-    def __init__(self, /, encoding: str, size: int, padding: bytes = b"\x00"):
+    def __init__(self, /, encoding: str, size: int, padding: bytes = b'\x00'):
         super().__init__(encoding=encoding)
         if len(padding) > 1:
-            raise ConfigurationError(
-                f"String padding may only contain one byte; got {len(padding)}"
-            )
+            raise ConfigurationError(f'String padding may only contain one byte; got {len(padding)}')
         self.size = size
         self.padding = padding
 
@@ -61,7 +59,7 @@ class LenghIndexedString(EncodedString):
         # that adds the `int` return type. But the values in `self.__dict__`
         # are typed as `Any`, so this provides an explicit hint about what
         # type of object that's expected here.
-        size_field: Field[int] = self.__dict__["size_field"]
+        size_field: Field[int] = self.__dict__['size_field']
 
         size, size_len = size_field.read(buffer)
         # raise RuntimeError(size)
@@ -71,7 +69,7 @@ class LenghIndexedString(EncodedString):
         return self.decode(encoded), size_len + len(encoded)
 
     def encode(self, value: str) -> bytes:
-        size_field: Field[int] = self.__dict__["size_field"]
+        size_field: Field[int] = self.__dict__['size_field']
 
         encoded = super().encode(value)
         size = size_field.encode(len(encoded))
@@ -82,21 +80,19 @@ class LenghIndexedString(EncodedString):
 class TerminatedString(EncodedString):
     size: int
 
-    def __init__(self, /, encoding: str, terminator: bytes = b"\x00"):
+    def __init__(self, /, encoding: str, terminator: bytes = b'\x00'):
         super().__init__(encoding=encoding)
         if len(terminator) > 1:
-            raise ConfigurationError(
-                f"String terminator may only contain one byte; got {len(terminator)}"
-            )
+            raise ConfigurationError(f'String terminator may only contain one byte; got {len(terminator)}')
         self.terminator = terminator
 
     def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
         char = buffer.read(1)
-        if char == b"":
-            return "", 0
+        if char == b'':
+            return '', 0
 
         value = bytearray()
-        while char not in (b"", self.terminator):
+        while char not in (b'', self.terminator):
             value.append(char[0])
             char = buffer.read(1)
 
@@ -106,7 +102,6 @@ class TerminatedString(EncodedString):
     def encode(self, value: str) -> bytes:
         encoded = super().encode(value)
         return encoded + self.terminator
-
 
 # Some aliases for convenience
 CString = TerminatedString

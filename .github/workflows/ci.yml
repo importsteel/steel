@@ -7,25 +7,36 @@ on:
     branches: [ main ]
 
 jobs:
-  prebuild:
-    name: Pre-build verification tests
+  verify:
+    name: Verify source code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python 3.12
+      - name: Set up Python
         uses: actions/setup-python@v4
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.12"
+          version: latest
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync
+      - name: Verify code quality
+        run: uv run ruff check
+      - name: Verify code style
+        run: uv run ruff format --check
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
       - uses: astral-sh/setup-uv@v1
         with:
-          version: "latest"
+          version: latest
       - name: Install dependencies
-        run: uv sync -p 3.12
-      - name: Mypy
+        run: uv sync
+      - name: Verify type hints
         run: uv run mypy
-      - name: unittest
+      - name: Run unit tests
         run: uv run python -m unittest discover -s tests
-      - name: lint
-        run: uv run ruff check
-      - name: format
-        run: uv run ruff format --check

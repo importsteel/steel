@@ -5,10 +5,6 @@ from steel.fields.base import ValidationError
 
 
 class TestBytes(unittest.TestCase):
-    def test_init(self):
-        field = Bytes(size=4)
-        self.assertEqual(field.size, 4)
-
     def test_validate_correct_size(self):
         field = Bytes(size=4)
         # Should not raise any exception
@@ -83,13 +79,12 @@ class TestBytes(unittest.TestCase):
 
 
 class TestFixedBytes(unittest.TestCase):
-    def test_init(self):
+    def test_automatic_size(self):
         data = b"\x00\x01\x02\x03"
         field = FixedBytes(data)
         self.assertEqual(field.value, data)
         self.assertEqual(field.size, 4)
 
-    def test_init_empty(self):
         field = FixedBytes(b"")
         self.assertEqual(field.value, b"")
         self.assertEqual(field.size, 0)

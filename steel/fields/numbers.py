@@ -56,6 +56,9 @@ class Float(ExplicitlySizedField[float]):
         super().__init__(size=size)
         self.format = FLOAT_FORMATS[size]
 
+    def validate(self, value: float) -> None:
+        pass
+
     def decode(self, value: bytes) -> float:
         values = struct.unpack(self.format, value)
         return float(values[0])

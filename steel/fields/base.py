@@ -1,8 +1,6 @@
 from abc import abstractmethod
 from io import BufferedIOBase
-from typing import Optional, Self, TypeVar
-
-T = TypeVar("T")
+from typing import Optional, Self
 
 
 class ConfigurationError(RuntimeError):
@@ -89,3 +87,32 @@ class ExplicitlySizedField[T](Field[T]):
     def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
         encoded = buffer.read(self.size)
         return self.decode(encoded), len(encoded)
+
+
+class ConversionField[T, D]:
+    inner_field: Field[D]
+
+    def get_inner_field(self) -> Field[D]:
+        field: Field[D] = self.__class__.__dict__["inner_field"]
+        return field
+
+    @abstractmethod
+    def validate(self, value: T) -> None:
+        raise NotImplementedError()
+
+    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+        field = self.get_inner_field()
+        value, size = field.read(buffer)
+        return self.to_python(value), size
+
+    @abstractmethod
+    def to_python(self, value: D) -> T:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def to_data(self, value: T) -> D:
+        raise NotImplementedError()
+
+    def write(self, value: T, buffer: BufferedIOBase) -> int:
+        field = self.get_inner_field()
+        return field.write(self.to_data(value), buffer)

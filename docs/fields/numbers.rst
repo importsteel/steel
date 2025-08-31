@@ -1,45 +1,52 @@
-=============
-Number Fields
-=============
+###############
+ Number Fields
+###############
 
-Interact with different kinds of numbers, with configurable options to support a wide range of data formats.
+Interact with different kinds of numbers, with configurable options to
+support a wide range of data formats.
 
-Integer
-=======
+*********
+ Integer
+*********
 
-The ``Integer`` field handles integer values with configurable size, signedness, and endianness.
+The ``Integer`` field handles integer values with configurable size,
+signedness, and endianness.
 
-.. code-block:: python
+.. code:: python
 
    age = Integer(size=1)
-   birth_year = Integer(size=2, endianness='<')
+   birth_year = Integer(size=2, endianness="<")
 
 Parameters
-----------
+==========
 
-- **size**: Number of bytes (1, 2, 4, or 8)
-- **signed**: Whether to interpret as signed integer (default: False)  
-- **endianness**: Byte order
+-  **size**: Number of bytes (1, 2, 4, or 8)
 
-  - ``'<'`` for little-endian (least significant byte first)
-  - ``'>'`` for big-endian (most significant byte first)
-  - (default: little-endian)
+-  **signed**: Whether to interpret as signed integer (default: False)
 
-Float
-=====
+-  **endianness**: Byte order
 
-The ``Float`` field handles encoding and decoding of floating-point values to/from binary data using IEEE 754 representation.
+   -  ``'<'`` for little-endian (least significant byte first)
+   -  ``'>'`` for big-endian (most significant byte first)
+   -  (default: little-endian)
 
-.. code-block:: python
+*******
+ Float
+*******
+
+The ``Float`` field handles encoding and decoding of floating-point
+values to/from binary data using IEEE 754 representation.
+
+.. code:: python
 
    price = Float()
 
 Parameters
-----------
+==========
 
-- **size**: Number of bytes
+-  **size**: Number of bytes
 
-  - 2 (half precision)
-  - 4 (single precision)
-  - 8 (double precision)
-  - (default: single precision)
+   -  2 (half precision)
+   -  4 (single precision)
+   -  8 (double precision)
+   -  (default: single precision)

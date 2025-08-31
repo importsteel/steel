@@ -52,5 +52,8 @@ packages = ["steel", "tests"]
 module = "tests.*"
 disable_error_code = "abstract,no-untyped-def"
 
+[tool.ruff]
+line-length = 100
+
 [tool.ruff.lint]
 extend-select = ["I001"]

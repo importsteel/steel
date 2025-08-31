@@ -54,6 +54,7 @@ different data types:
 .. toctree::
    :maxdepth: 2
 
+   structures
    fields/index
 
 More nuanced control over the data by accessing the data directly :doc:`as bytes <fields/bytes>`, or

@@ -62,17 +62,17 @@ class Field[T]:
         raise NotImplementedError()
 
     @abstractmethod
-    def unpack(self, value: bytes) -> T:
+    def pack(self, value: T) -> bytes:
         raise NotImplementedError()
 
     @abstractmethod
-    def pack(self, value: T) -> bytes:
+    def unpack(self, value: bytes) -> T:
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:
         # read() methods must all be different in order to know when the value
         # in the buffer is complete, but writing can be more consistent
-        # because the packed value already defines how much data to write.
+        # because the encoded value already defines how much data to write.
         packed = self.pack(value)
         size = buffer.write(packed)
         return size
@@ -107,10 +107,12 @@ class ConversionField[T, D]:
 
     @abstractmethod
     def to_python(self, value: D) -> T:
+        # FIXME: Find a better name for this
         raise NotImplementedError()
 
     @abstractmethod
     def to_data(self, value: T) -> D:
+        # FIXME: Find a better name for this
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:

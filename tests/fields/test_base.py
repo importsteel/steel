@@ -43,7 +43,7 @@ class TestFieldDescriptor(unittest.TestCase):
         self.assertIsInstance(instance.value, int)
 
 
-class IntegerStringBehavior(unittest.TestCase):
+class ConversionBehavior(unittest.TestCase):
     def test_data_field_property(self):
         field = IntegerString()
 

@@ -85,13 +85,13 @@ interpreted. In most cases, this will simply perform the inverse of the ``pack()
    will need to provide an implementation of this method.
 
    If your implementation of the ``read()`` method returns a native value without the need for an
-   encoding step, this method must still exist, and can simply contain ``pass``.
+   unpacking step, this method must still exist, and can simply contain ``pass``.
 
 ``pack(value: T) -> bytes``
 ---------------------------
 
-Encodes a native Python object into a sequence of bytes, suitable for writing to the data buffer. In
-most cases, this will simply perform the inverse of the ``unpack()`` method.
+Serializes a native Python object into a sequence of bytes, suitable for writing to the data buffer.
+In most cases, this will simply perform the inverse of the ``unpack()`` method.
 
 .. important::
 
@@ -127,8 +127,8 @@ A specific form of ``Field`` base class that adds a ``size`` attribute. With a f
 the field's configuration, this class provides a default ``read()`` implementation that reads
 exactly ``self.size`` bytes and passes the result straight to the ``unpack()`` method.
 
-``ConversionField[T, D]``
-=========================
+``WrappedField[T, D]``
+======================
 
 Subclassing an existing field can provide further customization, but the subclass must still use the
 same native Python type, such as all the `int` fields above. Sometimes you may want to use an
@@ -136,11 +136,10 @@ existing field to interact with the data buffer but interact with Python using a
 example used within Steel is the ``Timestamp`` field, which stores data using an ``Integer`` field
 internally, but presents a `datetime` object to external code.
 
-``ConversionField`` expands on the existing ``Field`` base class to specify two distinct data types.
+``WrappedField`` expands on the existing ``Field`` base class to specify two distinct data types.
 ``T`` works like any other field, specifying the data type that consumers of this field will
-interact with. The extra ``D`` refers to the type of the underlying conversion field. The actual
-interaction with the data buffer will be handled by a field supplied as an ``inner_field`` class
-attribute.
+interact with. The extra ``D`` refers to the type of the wrapped field. The actual interaction with
+the data buffer will be handled by a field supplied as an ``inner_field`` class attribute.
 
 In the timestamp example, ``T`` would be ``datetime``, while ``D`` would be ``int``. This handles
 the necessary type hinting, and an ``Integer`` field would handle the interactions in code. All
@@ -148,14 +147,14 @@ that's left is to convert between ``datetime`` and ``int``.
 
 .. code:: python
 
-   class Timestamp(ConversionField[datetime, int]):
+   class Timestamp(WrappedField[datetime, int]):
        inner_field = Integer(size=4)
 
-       def to_data(self, value: datetime) -> int:
-           return int(value.timestamp())
-
-       def to_python(self, value: int) -> datetime:
+       def wrap(self, value: int) -> datetime:
            return datetime.fromtimestamp(value)
+
+       def unwrap(self, value: datetime) -> int:
+           return int(value.timestamp())
 
 .. warning::
 
@@ -183,7 +182,7 @@ Raised when a value fails validation. Use this when:
 
 -  Values are out of range
 -  Required format constraints aren't met
--  Data cannot be properly encoded
+-  Data cannot be properly serialized
 
 ****************
  Best practices

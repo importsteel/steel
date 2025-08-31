@@ -7,29 +7,26 @@ from steel.fields.datetime import Duration, Timestamp
 
 
 class TestTimestamp(unittest.TestCase):
-    def test_to_data_conversion(self):
-        field = Timestamp(timezone=ZoneInfo("UTC"))
-        dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
-        timestamp = field.to_data(dt)
-        self.assertEqual(timestamp, int(dt.timestamp()))
-
-    def test_to_python_conversion(self):
+    def test_wrapping(self):
         field = Timestamp(timezone=ZoneInfo("UTC"))
         timestamp = 1672574400  # 2023-01-01 12:00:00 UTC
-        dt = field.to_python(timestamp)
+        dt = field.wrap(timestamp)
         expected = datetime.fromtimestamp(timestamp, tz=ZoneInfo("UTC"))
         self.assertEqual(dt, expected)
 
-    def test_roundtrip_conversion(self):
+    def test_unwrapping(self):
+        field = Timestamp(timezone=ZoneInfo("UTC"))
+        dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+        timestamp = field.unwrap(dt)
+        self.assertEqual(timestamp, int(dt.timestamp()))
+
+    def test_roundtrip(self):
         field = Timestamp(timezone=ZoneInfo("UTC"))
         original_dt = datetime(2023, 6, 15, 9, 30, 45, tzinfo=ZoneInfo("UTC"))
-
-        # Convert to data and back
-        timestamp = field.to_data(original_dt)
-        converted_dt = field.to_python(timestamp)
+        roundtrip_dt = field.wrap(field.unwrap(original_dt))
 
         # Should be equal (within precision limits)
-        self.assertEqual(int(original_dt.timestamp()), int(converted_dt.timestamp()))
+        self.assertEqual(int(original_dt.timestamp()), int(roundtrip_dt.timestamp()))
 
     def test_reading(self):
         field = Timestamp(timezone=ZoneInfo("UTC"))
@@ -55,51 +52,46 @@ class TestTimestamp(unittest.TestCase):
         det_field = Timestamp(timezone=ZoneInfo("America/Detroit"))
         dt_utc = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
 
-        timestamp = utc_field.to_data(dt_utc)
-        converted = det_field.to_python(timestamp)
-        self.assertEqual(dt_utc, converted)
+        det_utc = det_field.wrap(utc_field.unwrap(dt_utc))
+        self.assertEqual(dt_utc, det_utc)
 
     def test_different_timestamps(self):
         field = Timestamp()
 
         # Test epoch
         epoch = datetime(1970, 1, 1, 0, 0, 0, tzinfo=ZoneInfo("UTC"))
-        self.assertEqual(field.to_data(epoch), 0)
-        self.assertEqual(field.to_python(0), datetime.fromtimestamp(0, tz=ZoneInfo("UTC")))
+        self.assertEqual(field.unwrap(epoch), 0)
+        self.assertEqual(field.wrap(0), datetime.fromtimestamp(0, tz=ZoneInfo("UTC")))
 
         # Test future date
         future = datetime(2050, 12, 31, 23, 59, 59, tzinfo=ZoneInfo("UTC"))
-        timestamp = field.to_data(future)
-        converted = field.to_python(timestamp)
-        self.assertEqual(int(future.timestamp()), int(converted.timestamp()))
+        roundtrip = field.wrap(field.unwrap(future))
+        self.assertEqual(int(future.timestamp()), int(roundtrip.timestamp()))
 
 
 class TestDuration(unittest.TestCase):
-    def test_to_data_conversion(self):
-        field = Duration()
-        duration = timedelta(hours=2, minutes=30, seconds=45)
-        seconds = field.to_data(duration)
-        self.assertEqual(seconds, duration.total_seconds())
-
-    def test_to_python_conversion(self):
+    def test_wrapping(self):
         field = Duration()
         seconds = 9045.0  # 2 hours, 30 minutes, 45 seconds
-        duration = field.to_python(seconds)
+        duration = field.wrap(seconds)
         expected = timedelta(seconds=seconds)
         self.assertEqual(duration, expected)
 
-    def test_roundtrip_conversion(self):
+    def test_unwrapping(self):
+        field = Duration()
+        duration = timedelta(hours=2, minutes=30, seconds=45)
+        seconds = field.unwrap(duration)
+        self.assertEqual(seconds, duration.total_seconds())
+
+    def test_roundtrip(self):
         field = Duration()
         original_duration = timedelta(days=1, hours=2, minutes=30, seconds=45, microseconds=123456)
-
-        # Convert to data and back
-        seconds = field.to_data(original_duration)
-        converted_duration = field.to_python(seconds)
+        roundtrip_duration = field.wrap(field.unwrap(original_duration))
 
         # Should be equal (within precision limits of float)
         self.assertAlmostEqual(
             original_duration.total_seconds(),
-            converted_duration.total_seconds(),
+            roundtrip_duration.total_seconds(),
             places=5,
         )
 
@@ -120,30 +112,24 @@ class TestDuration(unittest.TestCase):
 
     def test_zero_duration(self):
         field = Duration()
-        zero_duration = timedelta()
+        seconds = 0
 
-        self.assertEqual(field.to_data(zero_duration), 0.0)
-        self.assertEqual(field.to_python(0.0), timedelta())
+        self.assertEqual(field.wrap(seconds), timedelta(seconds=seconds))
+        self.assertEqual(field.unwrap(timedelta(seconds=seconds)), seconds)
 
     def test_negative_duration(self):
         field = Duration()
-        negative_duration = timedelta(seconds=-3600)  # -1 hour
+        seconds = -3600  # -1 hour
 
-        seconds = field.to_data(negative_duration)
-        self.assertEqual(seconds, -3600.0)
-
-        converted = field.to_python(-3600.0)
-        self.assertEqual(converted, negative_duration)
+        self.assertEqual(field.wrap(seconds), timedelta(seconds=seconds))
+        self.assertEqual(field.unwrap(timedelta(seconds=seconds)), seconds)
 
     def test_fractional_seconds(self):
         field = Duration()
-        duration = timedelta(seconds=1.5)
+        seconds = 1.5
 
-        seconds = field.to_data(duration)
-        self.assertEqual(seconds, 1.5)
-
-        converted = field.to_python(1.5)
-        self.assertEqual(converted, duration)
+        self.assertEqual(field.wrap(seconds), timedelta(seconds=seconds))
+        self.assertEqual(field.unwrap(timedelta(seconds=seconds)), seconds)
 
     def test_various_durations(self):
         field = Duration()
@@ -161,8 +147,9 @@ class TestDuration(unittest.TestCase):
 
         for duration in test_cases:
             with self.subTest(duration=duration):
-                seconds = field.to_data(duration)
-                converted = field.to_python(seconds)
+                roundtrip = field.wrap(field.unwrap(duration))
                 self.assertAlmostEqual(
-                    duration.total_seconds(), converted.total_seconds(), places=5
+                    duration.total_seconds(),
+                    roundtrip.total_seconds(),
+                    places=5,
                 )

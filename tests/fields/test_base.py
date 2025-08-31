@@ -1,7 +1,7 @@
 import unittest
 from io import BytesIO
 
-from steel.fields.base import ConversionField
+from steel.fields.base import WrappedField
 from steel.fields.numbers import Integer
 
 
@@ -14,17 +14,17 @@ class Structure:
             self.value = value
 
 
-class IntegerString(ConversionField[str, int]):
+class IntegerString(WrappedField[str, int]):
     inner_field = Integer(size=2)
 
     def validate(self, value: str) -> None:
         pass
 
-    def to_data(self, value: str) -> int:
-        return int(value)
-
-    def to_python(self, value: int) -> str:
+    def wrap(self, value: int) -> str:
         return str(value)
+
+    def unwrap(self, value: str) -> int:
+        return int(value)
 
 
 class TestFieldDescriptor(unittest.TestCase):
@@ -57,17 +57,17 @@ class ConversionBehavior(unittest.TestCase):
         self.assertEqual(bytes_read, 2)
         self.assertEqual(result, "5")
 
-    def test_converting_to_data(self):
+    def test_wrapping(self):
         field = IntegerString()
-        result = field.to_data("5")
-
-        self.assertEqual(result, 5)
-
-    def test_converting_to_python(self):
-        field = IntegerString()
-        result = field.to_python(3)
+        result = field.wrap(3)
 
         self.assertEqual(result, "3")
+
+    def test_unwrapping(self):
+        field = IntegerString()
+        result = field.unwrap("5")
+
+        self.assertEqual(result, 5)
 
     def test_writing(self):
         field = IntegerString()

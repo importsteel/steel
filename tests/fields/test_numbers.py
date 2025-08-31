@@ -32,29 +32,29 @@ class TestInteger(unittest.TestCase):
         with self.assertRaises(ValidationError):
             field.validate(-129)
 
-    def test_big_endian_encoding(self):
+    def test_packing_big_endian(self):
         field = Integer(size=4, endianness=">")
         packed = field.pack(0x12345678)
         # Most-significant byte first
         self.assertEqual(packed, b"\x12\x34\x56\x78")
 
-    def test_little_endian_encoding(self):
+    def test_packing_little_endian(self):
         field = Integer(size=4, endianness="<")
         packed = field.pack(0x12345678)
         # Least-significant byte first
         self.assertEqual(packed, b"\x78\x56\x34\x12")
 
-    def test_big_endian_decoding(self):
+    def test_unpacking_big_endian(self):
         field = Integer(size=4, endianness=">")
         unpacked = field.unpack(b"\x12\x34\x56\x78")
         self.assertEqual(unpacked, 0x12345678)
 
-    def test_little_endian_decoding(self):
+    def test_unpacking_little_endian(self):
         field = Integer(size=4, endianness="<")
         unpacked = field.unpack(b"\x78\x56\x34\x12")
         self.assertEqual(unpacked, 0x12345678)
 
-    def test_signed_encoding(self):
+    def test_packing_signed(self):
         field = Integer(size=4, signed=True, endianness="<")
 
         # Positive values
@@ -65,7 +65,7 @@ class TestInteger(unittest.TestCase):
         packed = field.pack(-1)
         self.assertEqual(packed, b"\xff\xff\xff\xff")
 
-    def test_signed_decoding(self):
+    def test_unpacking_signed(self):
         field = Integer(size=4, signed=True, endianness="<")
 
         # Positive values
@@ -76,7 +76,7 @@ class TestInteger(unittest.TestCase):
         unpacked = field.unpack(b"\xff\xff\xff\xff")
         self.assertEqual(unpacked, -1)
 
-    def test_encoding_sizes(self):
+    def test_packing_sizes(self):
         field = Integer(size=1, endianness="<")
         self.assertEqual(field.pack(255), b"\xff")
 
@@ -89,7 +89,7 @@ class TestInteger(unittest.TestCase):
         field = Integer(size=8, endianness="<")
         self.assertEqual(field.pack(0x123456789ABCDEF0), b"\xf0\xde\xbc\x9a\x78\x56\x34\x12")
 
-    def test_decoding_sizes(self):
+    def test_unpacking_sizes(self):
         field = Integer(size=1, endianness="<")
         self.assertEqual(field.unpack(b"\xff"), 255)
 
@@ -104,7 +104,7 @@ class TestInteger(unittest.TestCase):
 
 
 class TestFloat(unittest.TestCase):
-    def test_encoding_sizes(self):
+    def test_packing_sizes(self):
         field = Float(size=2)
         packed = field.pack(0.5)
         self.assertEqual(packed, b"\x008")
@@ -117,7 +117,7 @@ class TestFloat(unittest.TestCase):
         packed = field.pack(0.5)
         self.assertEqual(packed, b"\x00\x00\x00\x00\x00\x00\xe0?")
 
-    def test_decoding_sizes(self):
+    def test_unpacking_sizes(self):
         field = Float(size=2)
         unpacked = field.unpack(b"\x008")
         self.assertEqual(unpacked, 0.5)

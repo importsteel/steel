@@ -72,7 +72,7 @@ class Field[T]:
     def write(self, value: T, buffer: BufferedIOBase) -> int:
         # read() methods must all be different in order to know when the value
         # in the buffer is complete, but writing can be more consistent
-        # because the encoded value already defines how much data to write.
+        # because the packed value already defines how much data to write.
         packed = self.pack(value)
         size = buffer.write(packed)
         return size
@@ -89,7 +89,7 @@ class ExplicitlySizedField[T](Field[T]):
         return self.unpack(packed), len(packed)
 
 
-class ConversionField[T, D]:
+class WrappedField[T, D]:
     inner_field: Field[D]
 
     def get_inner_field(self) -> Field[D]:
@@ -103,18 +103,16 @@ class ConversionField[T, D]:
     def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
         field = self.get_inner_field()
         value, size = field.read(buffer)
-        return self.to_python(value), size
+        return self.wrap(value), size
 
     @abstractmethod
-    def to_python(self, value: D) -> T:
-        # FIXME: Find a better name for this
+    def wrap(self, value: D) -> T:
         raise NotImplementedError()
 
     @abstractmethod
-    def to_data(self, value: T) -> D:
-        # FIXME: Find a better name for this
+    def unwrap(self, value: T) -> D:
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:
         field = self.get_inner_field()
-        return field.write(self.to_data(value), buffer)
+        return field.write(self.unwrap(value), buffer)

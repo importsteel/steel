@@ -1,6 +1,6 @@
-from .base import ConversionField as ConversionField
 from .base import ExplicitlySizedField as ExplicitlySizedField
 from .base import Field as Field
+from .base import WrappedField as WrappedField
 from .bytes import Bytes as Bytes
 from .bytes import FixedBytes as FixedBytes
 from .datetime import Duration as Duration

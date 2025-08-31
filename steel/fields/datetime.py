@@ -4,11 +4,11 @@ from datetime import (
 )
 from zoneinfo import ZoneInfo
 
-from .base import ConversionField
+from .base import WrappedField
 from .numbers import Float, Integer
 
 
-class Timestamp(ConversionField[datetime, int]):
+class Timestamp(WrappedField[datetime, int]):
     inner_field = Integer(size=4)
     timezone: ZoneInfo
 
@@ -18,21 +18,21 @@ class Timestamp(ConversionField[datetime, int]):
     def validate(self, value: datetime) -> None:
         pass
 
-    def to_data(self, value: datetime) -> int:
+    def unwrap(self, value: datetime) -> int:
         return int(value.timestamp())
 
-    def to_python(self, value: int) -> datetime:
+    def wrap(self, value: int) -> datetime:
         return datetime.fromtimestamp(value, tz=self.timezone)
 
 
-class Duration(ConversionField[timedelta, float]):
+class Duration(WrappedField[timedelta, float]):
     inner_field = Float(size=4)
 
     def validate(self, value: timedelta) -> None:
         pass
 
-    def to_data(self, value: timedelta) -> float:
+    def unwrap(self, value: timedelta) -> float:
         return value.total_seconds()
 
-    def to_python(self, value: float) -> timedelta:
+    def wrap(self, value: float) -> timedelta:
         return timedelta(seconds=value)

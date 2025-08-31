@@ -37,21 +37,21 @@ class TestIntegerEnum(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.field.validate(OtherEnum.OTHER)
 
-    def test_converting_valid_value_to_python(self):
-        result = self.field.to_python(1)
+    def test_wrapping_valid(self):
+        result = self.field.wrap(1)
         self.assertEqual(result, ByteOrder.BIG_ENDIAN)
         self.assertIsInstance(result, ByteOrder)
 
-        result = self.field.to_python(2)
+        result = self.field.wrap(2)
         self.assertEqual(result, ByteOrder.LITTLE_ENDIAN)
 
-    def test_converting_invalid_value_to_python(self):
+    def test_wrapping_invalid_value(self):
         with self.assertRaises(ValueError):
-            self.field.to_python(99)
+            self.field.wrap(99)
 
-    def test_converting_to_data(self):
-        self.assertEqual(self.field.to_data(ByteOrder.BIG_ENDIAN), 1)
-        self.assertEqual(self.field.to_data(ByteOrder.LITTLE_ENDIAN), 2)
+    def test_unwrapping(self):
+        self.assertEqual(self.field.unwrap(ByteOrder.BIG_ENDIAN), 1)
+        self.assertEqual(self.field.unwrap(ByteOrder.LITTLE_ENDIAN), 2)
 
 
 class TestStringEnum(unittest.TestCase):
@@ -70,25 +70,25 @@ class TestStringEnum(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.field.validate(OtherEnum.OTHER)
 
-    def test_converting_valid_value_to_python(self):
-        result = self.field.to_python("active")
+    def test_wrapping_valid_value(self):
+        result = self.field.wrap("active")
         self.assertEqual(result, Status.ACTIVE)
         self.assertIsInstance(result, Status)
 
-        result = self.field.to_python("inactive")
+        result = self.field.wrap("inactive")
         self.assertEqual(result, Status.INACTIVE)
 
-        result = self.field.to_python("pending")
+        result = self.field.wrap("pending")
         self.assertEqual(result, Status.PENDING)
 
-    def test_converting_invalid_data_to_python(self):
+    def test_wrapping_invalid_data(self):
         with self.assertRaises(ValueError):
-            self.field.to_python("invalid_status")
+            self.field.wrap("invalid_status")
 
-    def test_converting_to_data(self):
-        self.assertEqual(self.field.to_data(Status.ACTIVE), "active")
-        self.assertEqual(self.field.to_data(Status.INACTIVE), "inactive")
-        self.assertEqual(self.field.to_data(Status.PENDING), "pending")
+    def test_unwrapping(self):
+        self.assertEqual(self.field.unwrap(Status.ACTIVE), "active")
+        self.assertEqual(self.field.unwrap(Status.INACTIVE), "inactive")
+        self.assertEqual(self.field.unwrap(Status.PENDING), "pending")
 
 
 class TestFlags(unittest.TestCase):
@@ -114,36 +114,36 @@ class TestFlags(unittest.TestCase):
         with self.assertRaises(ValidationError):
             self.field.validate(OtherFlag.OTHER)
 
-    def test_to_python_single_flag(self):
-        result = self.field.to_python(1)
+    def test_wrapping_single_flag(self):
+        result = self.field.wrap(1)
         self.assertEqual(result, Permission.READ)
         self.assertIsInstance(result, Permission)
 
-        result = self.field.to_python(2)
+        result = self.field.wrap(2)
         self.assertEqual(result, Permission.WRITE)
 
-        result = self.field.to_python(4)
+        result = self.field.wrap(4)
         self.assertEqual(result, Permission.EXECUTE)
 
-    def test_to_python_combined_flags(self):
-        result = self.field.to_python(3)
+    def test_wrapping_combined_flags(self):
+        result = self.field.wrap(3)
         self.assertEqual(result, Permission.READ | Permission.WRITE)
 
-        result = self.field.to_python(7)
+        result = self.field.wrap(7)
         self.assertEqual(result, Permission.READ | Permission.WRITE | Permission.EXECUTE)
 
-    def test_to_python_invalid_value(self):
+    def test_wrapping_invalid_value(self):
         with self.assertRaises(ValueError):
-            self.field.to_python(99)
+            self.field.wrap(99)
 
-    def test_to_data_single_flag(self):
-        self.assertEqual(self.field.to_data(Permission.READ), 1)
-        self.assertEqual(self.field.to_data(Permission.WRITE), 2)
-        self.assertEqual(self.field.to_data(Permission.EXECUTE), 4)
+    def test_unwrapping_single_flag(self):
+        self.assertEqual(self.field.unwrap(Permission.READ), 1)
+        self.assertEqual(self.field.unwrap(Permission.WRITE), 2)
+        self.assertEqual(self.field.unwrap(Permission.EXECUTE), 4)
 
-    def test_to_data_combined_flags(self):
+    def test_unwrapping_combined_flags(self):
         combined = Permission.READ | Permission.WRITE
-        self.assertEqual(self.field.to_data(combined), 3)
+        self.assertEqual(self.field.unwrap(combined), 3)
 
         combined = Permission.READ | Permission.WRITE | Permission.EXECUTE
-        self.assertEqual(self.field.to_data(combined), 7)
+        self.assertEqual(self.field.unwrap(combined), 7)

@@ -1,10 +1,10 @@
 from enum import Enum, Flag, IntEnum, StrEnum
 
-from .base import ConversionField, Field, ValidationError
+from .base import Field, ValidationError, WrappedField
 from .numbers import Integer
 
 
-class EnumField[T: Enum, D](ConversionField[T, D]):
+class EnumField[T: Enum, D](WrappedField[T, D]):
     inner_field: Field[D]
     enum_class: type[T]
 
@@ -15,10 +15,10 @@ class EnumField[T: Enum, D](ConversionField[T, D]):
         if value not in self.enum_class:
             raise ValidationError(f"{value} is not a valid value for {self.enum_class.__name__}")
 
-    def to_python(self, value: D) -> T:
+    def wrap(self, value: D) -> T:
         return self.enum_class(value)
 
-    def to_data(self, value: T) -> D:
+    def unwrap(self, value: T) -> D:
         # `Enum.value` returns `Any`, so we hint it explicitly here.
         data_value: D = value.value
         return data_value

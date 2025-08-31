@@ -1,7 +1,7 @@
 from .base import Structure as Structure
-from .fields.base import ConversionField as ConversionField
 from .fields.base import ExplicitlySizedField as ExplicitlySizedField
 from .fields.base import Field as Field
+from .fields.base import WrappedField as WrappedField
 from .fields.bytes import Bytes as Bytes
 from .fields.bytes import FixedBytes as FixedBytes
 from .fields.datetime import Duration as Duration

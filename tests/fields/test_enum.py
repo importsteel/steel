@@ -34,7 +34,7 @@ class TestIntegerEnum(unittest.TestCase):
     def test_validating_invalid_value(self):
         class OtherEnum(IntEnum):
             OTHER = 99
-        
+
         with self.assertRaises(ValidationError):
             self.field.validate(OtherEnum.OTHER)
 
@@ -67,7 +67,7 @@ class TestStringEnum(unittest.TestCase):
     def test_validating_invalid_value(self):
         class OtherEnum(StrEnum):
             OTHER = "other"
-        
+
         with self.assertRaises(ValidationError):
             self.field.validate(OtherEnum.OTHER)
 
@@ -111,7 +111,7 @@ class TestFlags(unittest.TestCase):
     def test_validating_invalid_value(self):
         class OtherFlag(Flag):
             OTHER = auto()
-        
+
         with self.assertRaises(ValidationError):
             self.field.validate(OtherFlag.OTHER)
 
@@ -131,7 +131,9 @@ class TestFlags(unittest.TestCase):
         self.assertEqual(result, Permission.READ | Permission.WRITE)
 
         result = self.field.to_python(7)
-        self.assertEqual(result, Permission.READ | Permission.WRITE | Permission.EXECUTE)
+        self.assertEqual(
+            result, Permission.READ | Permission.WRITE | Permission.EXECUTE
+        )
 
     def test_to_python_invalid_value(self):
         with self.assertRaises(ValueError):

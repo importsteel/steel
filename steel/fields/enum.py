@@ -12,7 +12,9 @@ class EnumField[T: Enum, D](ConversionField[T, D]):
 
     def validate(self, value: T) -> None:
         if value not in self.enum_class:
-            raise ValidationError(f"{value} is not a valid value for {self.enum_class.__name__}")
+            raise ValidationError(
+                f"{value} is not a valid value for {self.enum_class.__name__}"
+            )
 
     def to_python(self, value: D) -> T:
         return self.enum_class(value)

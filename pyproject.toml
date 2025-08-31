@@ -30,6 +30,7 @@ Issues = "https://github.com/gulopine/steel/issues"
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "rstfmt>=0.0.14",
     "ruff>=0.12.11",
 ]
 

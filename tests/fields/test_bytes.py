@@ -20,17 +20,17 @@ class TestBytes(unittest.TestCase):
             field.validate(b"\x00\x01\x02\x03\x04")
         self.assertEqual(str(cm.exception), "Except 4 bytes; got 5")
 
-    def test_encode(self):
+    def test_pack(self):
         field = Bytes(size=4)
         data = b"\x00\x01\x02\x03"
-        encoded = field.encode(data)
-        self.assertEqual(encoded, data)
+        packed = field.pack(data)
+        self.assertEqual(packed, data)
 
-    def test_decode(self):
+    def test_unpack(self):
         field = Bytes(size=4)
         data = b"\x00\x01\x02\x03"
-        decoded = field.decode(data)
-        self.assertEqual(decoded, data)
+        unpacked = field.unpack(data)
+        self.assertEqual(unpacked, data)
 
     def test_read(self):
         field = Bytes(size=4)
@@ -74,8 +74,8 @@ class TestBytes(unittest.TestCase):
     def test_empty_bytes(self):
         field = Bytes(size=0)
         field.validate(b"")
-        self.assertEqual(field.encode(b""), b"")
-        self.assertEqual(field.decode(b""), b"")
+        self.assertEqual(field.pack(b""), b"")
+        self.assertEqual(field.unpack(b""), b"")
 
 
 class TestFixedBytes(unittest.TestCase):
@@ -112,16 +112,16 @@ class TestFixedBytes(unittest.TestCase):
             "Expected b'\\x00\\x01\\x02\\x03'; got b'\\x00\\x01\\x02'",
         )
 
-    def test_encode(self):
+    def test_pack(self):
         field = FixedBytes(b"\x00\x01\x02\x03")
-        # FixedBytes encode should return the input (but validation ensures it's correct)
-        encoded = field.encode(b"\x00\x01\x02\x03")
-        self.assertEqual(encoded, b"\x00\x01\x02\x03")
+        # FixedBytes pack should return the input (but validation ensures it's correct)
+        packed = field.pack(b"\x00\x01\x02\x03")
+        self.assertEqual(packed, b"\x00\x01\x02\x03")
 
-    def test_decode(self):
+    def test_unpack(self):
         field = FixedBytes(b"\x00\x01\x02\x03")
-        decoded = field.decode(b"\x00\x01\x02\x03")
-        self.assertEqual(decoded, b"\x00\x01\x02\x03")
+        unpacked = field.unpack(b"\x00\x01\x02\x03")
+        self.assertEqual(unpacked, b"\x00\x01\x02\x03")
 
     def test_read(self):
         field = FixedBytes(b"\x00\x01\x02\x03")

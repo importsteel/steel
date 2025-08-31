@@ -52,29 +52,29 @@ to ensure data integrity, be sure to call it yourself separately.
 ``read(buffer: BufferedIOBase) -> tuple[T, int]``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Reads data from a data buffer, such as a file, and returns a fully-decoded value as well the number
+Reads data from a data buffer, such as a file, and returns a fully-unpacked value as well the number
 of bytes consumed from the buffer.
 
 Not all data structures have a size that can be known up front, so this method can adjust the read
 length as necessary, based on any combination of the field and the actual data that was found.
 Returning the number of bytes alongside the Python value provides visibility into this behavior.
 
-This method is also responsible for the decoding step below. Most implementations will read the
-appropriate number of bytes and pass them along to the ``encode()`` method to get a Python value
-to return. But some fields may already be fully decoded as part of the process of reading data
-from the file. In these cases, there's no need to call ``encode()`` as a separate step, and
+This method is also responsible for the unpacking step below. Most implementations will read the
+appropriate number of bytes and pass them along to the ``pack()`` method to get a Python value
+to return. But some fields may already be fully unpacked as part of the process of reading data
+from the file. In these cases, there's no need to call ``pack()`` as a separate step, and
 ``read()`` can simply return the appropriate value directly.
 
 .. important::
    This is defined an abstract method, so unless you're subclassing an existing discrete field,
    you will need to provide an implementation of this method.
 
-``decode(value: bytes) -> T``
+``unpack(value: bytes) -> T``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Decodes a sequence of bytes into a native Python object. The bytes provided will have already been
-read from the buffer, this method simply provides a convenient way to modify how those bytes are
-interpreted. In most cases, this will simply perform the inverse of the ``encode()`` method.
+Converts a sequence of bytes into a native Python object. The bytes provided will have already
+been read from the buffer, this method simply provides a convenient way to modify how those bytes
+are interpreted. In most cases, this will simply perform the inverse of the ``pack()`` method.
 
 .. important::
    This is defined an abstract method, so unless you're subclassing an existing discrete field,
@@ -83,32 +83,32 @@ interpreted. In most cases, this will simply perform the inverse of the ``encode
    If your implementation of the ``read()`` method returns a native value without the need for an
    encoding step, this method must still exist, and can simply contain ``pass``.
 
-``encode(value: T) -> bytes``
+``pack(value: T) -> bytes``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Encodes a native Python object into a sequence of bytes, suitable for writing to the data buffer.
-In most cases, this will simply perform the inverse of the ``decode()`` method.
+In most cases, this will simply perform the inverse of the ``unpack()`` method.
 
 .. important::
    This is defined an abstract method, so unless you're subclassing an existing discrete field,
    you will need to provide an implementation of this method.
 
-   If your implementation of the ``write()`` method can write out data without the need for a
-   decoding step, this method must still exist, and can simply contain ``pass``.
+   If your implementation of the ``write()`` method can write out data without the need for an
+   unpacking step, this method must still exist, and can simply contain ``pass``.
 
 ``write(self, value: T, buffer: BufferedIOBase) -> int``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Writes out a fully-encoded byte sequence representing a native Python object. Like ``read()``,
+Writes out a fully-packed byte sequence representing a native Python object. Like ``read()``,
 this returns the number of bytes that were written to the buffer.
 
 In most cases, there's no need to override this method with a custom implementation. The
-``encode()`` method already returns a sequence of bytes suitable for writing, and the number of
+``pack()`` method already returns a sequence of bytes suitable for writing, and the number of
 bytes to write can be determined by the length of that sequence.
 
 .. tip::
    This method is __not__ defined as abstract, and most fields can safely rely on the base
-   implementation, which simply writes all the bytes returned by the ``encode()`` method.
+   implementation, which simply writes all the bytes returned by the ``pack()`` method.
 
 Helper Classes
 ==============
@@ -118,7 +118,7 @@ Helper Classes
 
 A specific form of ``Field`` base class that adds a ``size`` attribute. With a fixed size as part
 of the field's configuration, this class provides a default ``read()`` implementation that reads
-exactly ``self.size`` bytes and passes the result straight to the ``decode()`` method.
+exactly ``self.size`` bytes and passes the result straight to the ``unpack()`` method.
 
 ``ConversionField[T, D]``
 -------------------------

@@ -2,7 +2,7 @@
 Text Fields
 ===========
 
-Encode and decode Unicode text with configurable character encodings and other considerations.
+Read and write Unicode text with configurable character encodings and other considerations.
 Strings can come in varying lengths, which can be stored in a few different ways, so there are
 multiple text fields to handle different behaviors.
 
@@ -30,10 +30,10 @@ string.
    field = FixedLengthString(size=5, encoding='utf-8')
 
    # ASCII: 1 byte per character
-   field.encode('hello')  # b'hello' (5 bytes, which can be stored successfully)
+   field.pack('hello')  # b'hello' (5 bytes, which can be stored successfully)
 
    # UTF-8: Variable bytes per character
-   field.encode('héllo')  # b'h\xc3\xa9llo' (6 bytes, which would exceed the size limit)
+   field.pack('héllo')  # b'h\xc3\xa9llo' (6 bytes, which would exceed the size limit)
 
 FixedLengthString
 =================

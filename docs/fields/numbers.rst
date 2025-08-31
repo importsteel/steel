@@ -2,7 +2,7 @@
 Number Fields
 =============
 
-Encode and decode different kinds of numbers, with configurable options to support a wide range of data formats.
+Interact with different kinds of numbers, with configurable options to support a wide range of data formats.
 
 Integer
 =======

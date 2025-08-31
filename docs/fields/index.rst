@@ -92,15 +92,15 @@ Reads the appropriate number of bytes from a data stream, such as a file, and re
 
    title.read(stream)  # ('Example', 10)
 
-``decode(value: bytes) -> T``
+``pack(value: T) -> bytes``
+---------------------------
+
+Converts a native Python value to ``bytes``. The input value for this method will depend on the field being used. Check the field documentation for more details.
+
+``unpack(value: bytes) -> T``
 -----------------------------
 
 Converts ``bytes`` from the data stream to a native Python object. The return type of this method will depend on the field being used. Check the field documentation for more details.
-
-``encode(value: T) -> bytes``
------------------------------
-
-Converts a native Python value to ``bytes``. The input value for this method will depend on the field being used. Check the field documentation for more details.
 
 ``write(value: T, stream: BufferedIOBase) -> int``
 --------------------------------------------------

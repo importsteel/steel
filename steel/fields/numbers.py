@@ -43,11 +43,11 @@ class Integer(ExplicitlySizedField[int]):
         if value < min_value:
             raise ValidationError(f"{value} is too low")
 
-    def decode(self, value: bytes) -> int:
+    def unpack(self, value: bytes) -> int:
         values = struct.unpack(self.format, value)
         return int(values[0])
 
-    def encode(self, value: int) -> bytes:
+    def pack(self, value: int) -> bytes:
         return struct.pack(self.format, value)
 
 
@@ -59,9 +59,9 @@ class Float(ExplicitlySizedField[float]):
     def validate(self, value: float) -> None:
         pass
 
-    def decode(self, value: bytes) -> float:
+    def unpack(self, value: bytes) -> float:
         values = struct.unpack(self.format, value)
         return float(values[0])
 
-    def encode(self, value: float) -> bytes:
+    def pack(self, value: float) -> bytes:
         return struct.pack(self.format, value)

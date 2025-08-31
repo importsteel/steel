@@ -16,10 +16,10 @@ class EncodedString(ABC, Field[str]):
         except UnicodeEncodeError as e:
             raise ValidationError(f"{value} could be encoded: {e.reason}")
 
-    def decode(self, value: bytes) -> str:
+    def unpack(self, value: bytes) -> str:
         return value.decode(self.encoding)
 
-    def encode(self, value: str) -> bytes:
+    def pack(self, value: str) -> bytes:
         return value.encode(self.encoding)
 
 
@@ -40,7 +40,7 @@ class FixedLengthString(EncodedString):
         # it's useful to define it here, to easily contrast it with the
         # other fields below.
         encoded = buffer.read(self.size)
-        return self.decode(encoded), len(encoded)
+        return self.unpack(encoded), len(encoded)
 
 
 class LenghIndexedString(EncodedString):
@@ -68,13 +68,13 @@ class LenghIndexedString(EncodedString):
         encoded = buffer.read(size)
         # raise RuntimeError(len(encoded))
         # print(len(encoded), encoded)
-        return self.decode(encoded), size_len + len(encoded)
+        return self.unpack(encoded), size_len + len(encoded)
 
-    def encode(self, value: str) -> bytes:
+    def pack(self, value: str) -> bytes:
         size_field: Field[int] = self.__dict__["size_field"]
 
-        encoded = super().encode(value)
-        size = size_field.encode(len(encoded))
+        encoded = super().pack(value)
+        size = size_field.pack(len(encoded))
 
         return size + encoded
 
@@ -101,10 +101,10 @@ class TerminatedString(EncodedString):
             char = buffer.read(1)
 
         encoded = bytes(value)
-        return self.decode(encoded), len(encoded) + 1
+        return self.unpack(encoded), len(encoded) + 1
 
-    def encode(self, value: str) -> bytes:
-        encoded = super().encode(value)
+    def pack(self, value: str) -> bytes:
+        encoded = super().pack(value)
         return encoded + self.terminator
 
 

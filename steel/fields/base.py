@@ -62,19 +62,19 @@ class Field[T]:
         raise NotImplementedError()
 
     @abstractmethod
-    def decode(self, value: bytes) -> T:
+    def unpack(self, value: bytes) -> T:
         raise NotImplementedError()
 
     @abstractmethod
-    def encode(self, value: T) -> bytes:
+    def pack(self, value: T) -> bytes:
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:
         # read() methods must all be different in order to know when the value
         # in the buffer is complete, but writing can be more consistent
-        # because the encoded value already defines how much data to write.
-        encoded = self.encode(value)
-        size = buffer.write(encoded)
+        # because the packed value already defines how much data to write.
+        packed = self.pack(value)
+        size = buffer.write(packed)
         return size
 
 
@@ -85,8 +85,8 @@ class ExplicitlySizedField[T](Field[T]):
         self.size = size
 
     def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
-        encoded = buffer.read(self.size)
-        return self.decode(encoded), len(encoded)
+        packed = buffer.read(self.size)
+        return self.unpack(packed), len(packed)
 
 
 class ConversionField[T, D]:

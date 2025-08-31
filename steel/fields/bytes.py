@@ -7,10 +7,10 @@ class Bytes(ExplicitlySizedField[bytes]):
         if size != self.size:
             raise ValidationError(f"Except {self.size} bytes; got {size}")
 
-    def decode(self, value: bytes) -> bytes:
+    def unpack(self, value: bytes) -> bytes:
         return value
 
-    def encode(self, value: bytes) -> bytes:
+    def pack(self, value: bytes) -> bytes:
         return value
 
 
@@ -25,6 +25,6 @@ class FixedBytes(Bytes):
         if value != self.value:
             raise ValidationError(f"Expected {self.value!r}; got {value!r}")
 
-    def encode(self, value: bytes) -> bytes:
+    def pack(self, value: bytes) -> bytes:
         # Ignore the input value and always write the fixed bytes
         return self.value

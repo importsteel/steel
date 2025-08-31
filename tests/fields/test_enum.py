@@ -1,9 +1,8 @@
 import unittest
-
-from enum import IntEnum, StrEnum, Flag, auto
+from enum import Flag, IntEnum, StrEnum, auto
 
 from steel.fields.base import ValidationError
-from steel.fields.enum import IntegerEnum, StringEnum, Flags
+from steel.fields.enum import Flags, IntegerEnum, StringEnum
 
 
 class ByteOrder(IntEnum):

@@ -1,34 +1,17 @@
-from .base import (
-    ConversionField as ConversionField,
-    ExplicitlySizedField as ExplicitlySizedField,
-    Field as Field,
-)
-
-from .bytes import (
-    Bytes as Bytes,
-    FixedBytes as FixedBytes,
-)
-
-from .datetime import (
-    Duration as Duration,
-    Timestamp as Timestamp,
-)
-
-from .enum import (
-    Flags as Flags,
-    IntegerEnum as IntegerEnum,
-    StringEnum as StringEnum,
-)
-
-from .numbers import (
-    Float as Float,
-    Integer as Integer,
-)
-
-from .text import (
-    FixedLengthString as FixedLengthString,
-    LenghIndexedString as LenghIndexedString,
-    TerminatedString as TerminatedString,
-    CString as CString,
-    PascalString as PascalString,
-)
+from .base import ConversionField as ConversionField
+from .base import ExplicitlySizedField as ExplicitlySizedField
+from .base import Field as Field
+from .bytes import Bytes as Bytes
+from .bytes import FixedBytes as FixedBytes
+from .datetime import Duration as Duration
+from .datetime import Timestamp as Timestamp
+from .enum import Flags as Flags
+from .enum import IntegerEnum as IntegerEnum
+from .enum import StringEnum as StringEnum
+from .numbers import Float as Float
+from .numbers import Integer as Integer
+from .text import CString as CString
+from .text import FixedLengthString as FixedLengthString
+from .text import LenghIndexedString as LenghIndexedString
+from .text import PascalString as PascalString
+from .text import TerminatedString as TerminatedString

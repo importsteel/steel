@@ -1,7 +1,8 @@
 import unittest
 from io import BytesIO
-from steel.fields.bytes import Bytes, FixedBytes
+
 from steel.fields.base import ValidationError
+from steel.fields.bytes import Bytes, FixedBytes
 
 
 class TestBytes(unittest.TestCase):

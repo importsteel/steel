@@ -51,3 +51,6 @@ packages = ["steel", "tests"]
 [[tool.mypy.overrides]]
 module = "tests.*"
 disable_error_code = "abstract,no-untyped-def"
+
+[tool.ruff.lint]
+extend-select = ["I001"]

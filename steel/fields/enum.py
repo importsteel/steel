@@ -1,4 +1,5 @@
 from enum import Enum, Flag, IntEnum, StrEnum
+
 from .base import ConversionField, Field, ValidationError
 from .numbers import Integer
 

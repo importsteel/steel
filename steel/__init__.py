@@ -1,7 +1,18 @@
-from .base import (
-    Structure as Structure,
-)
-
-from .fields import (
-    Field as Field,
-)
+from .base import Structure as Structure
+from .fields.base import ConversionField as ConversionField
+from .fields.base import ExplicitlySizedField as ExplicitlySizedField
+from .fields.base import Field as Field
+from .fields.bytes import Bytes as Bytes
+from .fields.bytes import FixedBytes as FixedBytes
+from .fields.datetime import Duration as Duration
+from .fields.datetime import Timestamp as Timestamp
+from .fields.enum import Flags as Flags
+from .fields.enum import IntegerEnum as IntegerEnum
+from .fields.enum import StringEnum as StringEnum
+from .fields.numbers import Float as Float
+from .fields.numbers import Integer as Integer
+from .fields.text import CString as CString
+from .fields.text import FixedLengthString as FixedLengthString
+from .fields.text import LenghIndexedString as LenghIndexedString
+from .fields.text import PascalString as PascalString
+from .fields.text import TerminatedString as TerminatedString

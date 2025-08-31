@@ -1,9 +1,9 @@
+import unittest
 from datetime import datetime, timedelta
 from io import BytesIO
-import unittest
 from zoneinfo import ZoneInfo
 
-from steel.fields.datetime import Timestamp, Duration
+from steel.fields.datetime import Duration, Timestamp
 
 
 class TestTimestamp(unittest.TestCase):

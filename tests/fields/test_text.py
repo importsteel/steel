@@ -1,14 +1,14 @@
 import unittest
 from io import BytesIO
 
+from steel.fields.base import ConfigurationError, ValidationError
+from steel.fields.numbers import Integer
 from steel.fields.text import (
     EncodedString,
     FixedLengthString,
     LenghIndexedString,
     TerminatedString,
 )
-from steel.fields.numbers import Integer
-from steel.fields.base import ConfigurationError, ValidationError
 
 
 class TestStringEncoding(unittest.TestCase):

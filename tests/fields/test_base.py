@@ -1,5 +1,5 @@
-from io import BytesIO
 import unittest
+from io import BytesIO
 
 from steel.fields.base import ConversionField
 from steel.fields.numbers import Integer

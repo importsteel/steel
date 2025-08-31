@@ -1,7 +1,7 @@
 from abc import ABC
 from io import BufferedIOBase
 
-from .base import Field, ConfigurationError, ValidationError
+from .base import ConfigurationError, Field, ValidationError
 
 
 class EncodedString(ABC, Field[str]):

@@ -87,9 +87,7 @@ class TestInteger(unittest.TestCase):
         self.assertEqual(field.pack(0x12345678), b"\x78\x56\x34\x12")
 
         field = Integer(size=8, endianness="<")
-        self.assertEqual(
-            field.pack(0x123456789ABCDEF0), b"\xf0\xde\xbc\x9a\x78\x56\x34\x12"
-        )
+        self.assertEqual(field.pack(0x123456789ABCDEF0), b"\xf0\xde\xbc\x9a\x78\x56\x34\x12")
 
     def test_decoding_sizes(self):
         field = Integer(size=1, endianness="<")
@@ -102,9 +100,7 @@ class TestInteger(unittest.TestCase):
         self.assertEqual(field.unpack(b"\x78\x56\x34\x12"), 0x12345678)
 
         field = Integer(size=8, endianness="<")
-        self.assertEqual(
-            field.unpack(b"\xf0\xde\xbc\x9a\x78\x56\x34\x12"), 0x123456789ABCDEF0
-        )
+        self.assertEqual(field.unpack(b"\xf0\xde\xbc\x9a\x78\x56\x34\x12"), 0x123456789ABCDEF0)
 
 
 class TestFloat(unittest.TestCase):

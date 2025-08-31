@@ -65,9 +65,7 @@ class TestTimestamp(unittest.TestCase):
         # Test epoch
         epoch = datetime(1970, 1, 1, 0, 0, 0, tzinfo=ZoneInfo("UTC"))
         self.assertEqual(field.to_data(epoch), 0)
-        self.assertEqual(
-            field.to_python(0), datetime.fromtimestamp(0, tz=ZoneInfo("UTC"))
-        )
+        self.assertEqual(field.to_python(0), datetime.fromtimestamp(0, tz=ZoneInfo("UTC")))
 
         # Test future date
         future = datetime(2050, 12, 31, 23, 59, 59, tzinfo=ZoneInfo("UTC"))
@@ -92,9 +90,7 @@ class TestDuration(unittest.TestCase):
 
     def test_roundtrip_conversion(self):
         field = Duration()
-        original_duration = timedelta(
-            days=1, hours=2, minutes=30, seconds=45, microseconds=123456
-        )
+        original_duration = timedelta(days=1, hours=2, minutes=30, seconds=45, microseconds=123456)
 
         # Convert to data and back
         seconds = field.to_data(original_duration)
@@ -120,9 +116,7 @@ class TestDuration(unittest.TestCase):
         buffer.seek(0)
         read_duration, bytes_read = field.read(buffer)
         self.assertEqual(bytes_read, 4)
-        self.assertAlmostEqual(
-            duration.total_seconds(), read_duration.total_seconds(), places=5
-        )
+        self.assertAlmostEqual(duration.total_seconds(), read_duration.total_seconds(), places=5)
 
     def test_zero_duration(self):
         field = Duration()

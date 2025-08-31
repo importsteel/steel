@@ -130,9 +130,7 @@ class TestFlags(unittest.TestCase):
         self.assertEqual(result, Permission.READ | Permission.WRITE)
 
         result = self.field.to_python(7)
-        self.assertEqual(
-            result, Permission.READ | Permission.WRITE | Permission.EXECUTE
-        )
+        self.assertEqual(result, Permission.READ | Permission.WRITE | Permission.EXECUTE)
 
     def test_to_python_invalid_value(self):
         with self.assertRaises(ValueError):

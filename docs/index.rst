@@ -2,8 +2,8 @@
  Steel
 #######
 
-Steel provides an elegant way to define binary data structures using
-Python, using classes and a wide range of field definitions.
+Steel provides an elegant way to define binary data structures using Python, using classes and a
+wide range of field definitions.
 
 **************
  Requirements
@@ -35,7 +35,7 @@ Python, using classes and a wide range of field definitions.
  Core Concepts
 ***************
 
-Steel consists of two main features: structures and fields. Fields represent 
+Steel consists of two main features: structures and fields. Fields represent
 
 Structures
 ==========
@@ -45,17 +45,17 @@ To be written
 Fields
 ======
 
-Fields are the building blocks of Steel structures. They define how data
-is encoded, decoded, and validated.
+Fields are the building blocks of Steel structures. They define how data is encoded, decoded, and
+validated.
 
-All fields provide a set of :doc:`common functionality <fields/index>`,
-with a range of fields for different data types:
+All fields provide a set of :doc:`common functionality <fields/index>`, with a range of fields for
+different data types:
 
 .. toctree::
    :maxdepth: 2
 
    fields/index
 
-More nuanced control over the data by accessing the data directly
-:doc:`as bytes <fields/bytes>`, or you can create your own :doc:`custom
-fields <fields/custom-fields>` to support new or customized data types.
+More nuanced control over the data by accessing the data directly :doc:`as bytes <fields/bytes>`, or
+you can create your own :doc:`custom fields <fields/custom-fields>` to support new or customized
+data types.

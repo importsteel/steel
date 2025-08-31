@@ -2,15 +2,14 @@
  Number Fields
 ###############
 
-Interact with different kinds of numbers, with configurable options to
-support a wide range of data formats.
+Interact with different kinds of numbers, with configurable options to support a wide range of data
+formats.
 
 *********
  Integer
 *********
 
-The ``Integer`` field handles integer values with configurable size,
-signedness, and endianness.
+The ``Integer`` field handles integer values with configurable size, signedness, and endianness.
 
 .. code:: python
 
@@ -34,8 +33,8 @@ Parameters
  Float
 *******
 
-The ``Float`` field handles encoding and decoding of floating-point
-values to/from binary data using IEEE 754 representation.
+The ``Float`` field handles encoding and decoding of floating-point values to/from binary data using
+IEEE 754 representation.
 
 .. code:: python
 

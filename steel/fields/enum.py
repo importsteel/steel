@@ -31,6 +31,13 @@ class IntegerEnum(EnumField[IntEnum, int]):
 class StringEnum(EnumField[StrEnum, str]):
     inner_field: Field[str]
 
+    def __init__(self) -> None:
+        try:
+            self.inner_field
+            self.enum_class
+        except AttributeError:
+            raise TypeError("StringEnum must be subclassed with inner_field and enum_class")
+
 
 class Flags(EnumField[Flag, int]):
     inner_field: Field[int] = Integer(size=1)

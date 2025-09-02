@@ -2,6 +2,8 @@ from abc import abstractmethod
 from io import BufferedIOBase
 from typing import Any, Optional, Self, overload
 
+import steel.base
+
 
 class ConfigurationError(RuntimeError):
     pass
@@ -18,8 +20,9 @@ class Field[T]:
     @overload
     def __get__(self, obj: None, owner: type) -> Self: ...
 
+    # This may need to change later, to avoid circular imports, but we'll see
     @overload
-    def __get__(self, obj: object, owner: type) -> T: ...
+    def __get__(self, obj: "steel.base.Structure", owner: type) -> T: ...
 
     @overload
     def __get__(self, obj: Any, owner: type) -> Self: ...
@@ -30,7 +33,15 @@ class Field[T]:
         value: T = obj.__dict__.get(self.name)
         return value
 
-    def __set__(self, instance: Any, value: T) -> None:
+    @overload
+    def __set__(self, instance: "steel.base.Structure", value: T) -> None:
+        pass
+
+    @overload
+    def __set__(self, instance: Any, value: Any) -> None:
+        pass
+
+    def __set__(self, instance: Any, value: Any) -> None:
         instance.__dict__[self.name] = value
 
     @abstractmethod

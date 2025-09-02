@@ -6,14 +6,6 @@ Fields are named components within a structure. At their most basic, they repres
 that can be converted directly to Python primitives, like ``int`` and ``str``. More complex fields
 could contain multiple attributes, value lists or nested structures.
 
-.. toctree::
-   :maxdepth: 2
-
-   numbers
-   text
-   bytes
-   custom-fields
-
 **************
  Using Fields
 **************
@@ -25,7 +17,6 @@ naming individual fields, as well as configuring each field as necessary:
 
    import steel
 
-
    class Header(steel.Structure):
        tag = steel.FixedBytes(b"DATA")
        major_version = steel.Integer(size=1)
@@ -35,7 +26,7 @@ naming individual fields, as well as configuring each field as necessary:
 
        @property
        def version(self) -> str:
-           f"{obj.major_version}/{obj.minor_version}"
+           f"{obj.major_version}.{obj.minor_version}"
 
 Field are added from top to bottom, in the order that the data appears in the target data structure.
 So a data stream for the ``Header`` above could look like this:
@@ -64,19 +55,6 @@ data in native data types defined by each field:
        obj.title         # 'Example'
 
    )
-
-Finer-grained access to field behavior can be achieved using a more detailed :ref:`shared-api`.
-
-*************
- Field Types
-*************
-
-Steel provides fields in various categories, with detailed documentation for each:
-
--  :doc:`Numbers <numbers>`
--  :doc:`Text <text>`
-
-.. _shared-api:
 
 ************
  Shared API
@@ -133,3 +111,23 @@ were written.
 
    title.write("Example", stream)  # 10
    stream.getvalue()  # b'Example\x00\x00\x00'
+
+*************
+ Field Types
+*************
+
+Steel provides fields in various categories, with detailed documentation for each:
+
+.. toctree::
+   :maxdepth: 2
+
+   fields/numbers
+   fields/text
+   fields/bytes
+
+And custom fields can be added as well:
+
+.. toctree::
+   :maxdepth: 2
+
+   fields/custom-fields

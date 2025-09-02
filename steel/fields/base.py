@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from io import BufferedIOBase
-from typing import Optional, Self
+from typing import Any, Optional, Self, overload
 
 
 class ConfigurationError(RuntimeError):
@@ -35,7 +35,17 @@ class Field[T]:
     #    definition. So for a field that uses int, it'd be a subclass of
     #    Field[int], which is copied here, which affects how type checkers
     #    interpret that field on instances later down the road.
-    def __get__(self, obj: object, obj_type: Optional[type] = None) -> Self | T:
+
+    @overload
+    def __get__(self, obj: None, cls: Any) -> Self: ...
+
+    @overload
+    def __get__(self, obj: object, cls: Any) -> T: ...
+
+    @overload
+    def __get__(self, obj: Any, cls: Any) -> Self: ...
+
+    def __get__(self, obj: Optional[Any], cls: Any) -> Self | T:
         # This method itself also needs to return a value that satisfies its
         # own return types. If it doesn't return anything, it would implicitly
         # return None, which isn't part of the type definition (but can be done
@@ -51,6 +61,12 @@ class Field[T]:
         # descriptor anyway. And if a value is *not* assigned to the instance
         # attribute, returning the field object itself is also the right thing
         # to do, matching Python's natural behavior without the descriptor.
+
+        # Ideally this would raise an AttributeError if called on an instance,
+        # because that would mean that a value hasn't yet been set. But rigth
+        # now, there are fields that depend on having a separate internal
+        # field, which is accessed as an attribute of the field itself, causing
+        # all sorts of things to fail.
         return self
 
     @abstractmethod

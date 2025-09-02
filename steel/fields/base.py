@@ -125,6 +125,14 @@ class WrappedField[T, D]:
     def wrap(self, value: D) -> T:
         raise NotImplementedError()
 
+    def pack(self, value: T) -> bytes:
+        field = self.get_inner_field()
+        return field.pack(self.unwrap(value))
+
+    def unpack(self, value: bytes) -> T:
+        field = self.get_inner_field()
+        return self.wrap(field.unpack(value))
+
     @abstractmethod
     def unwrap(self, value: T) -> D:
         raise NotImplementedError()

@@ -3,11 +3,16 @@ from enum import Flag, IntEnum, StrEnum, auto
 
 from steel.fields.base import ValidationError
 from steel.fields.enum import Flags, IntegerEnum, StringEnum
+from steel.fields.text import FixedLengthString
 
 
 class ByteOrder(IntEnum):
     BIG_ENDIAN = 1
     LITTLE_ENDIAN = 2
+
+
+class ByteOrderField(IntegerEnum):
+    enum_class = ByteOrder
 
 
 class Status(StrEnum):
@@ -16,10 +21,19 @@ class Status(StrEnum):
     PENDING = "pending"
 
 
+class StatusField(StringEnum):
+    enum_class = Status
+    inner_field = FixedLengthString(size=3, encoding="ascii")
+
+
 class Permission(Flag):
     READ = auto()
     WRITE = auto()
     EXECUTE = auto()
+
+
+class PermissionField(Flags):
+    enum_class = Permission
 
 
 class TestIntegerEnum(unittest.TestCase):
@@ -56,7 +70,11 @@ class TestIntegerEnum(unittest.TestCase):
 
 class TestStringEnum(unittest.TestCase):
     def setUp(self):
-        self.field = StringEnum(Status)
+        class StatusField(StringEnum):
+            enum_class = Status
+            inner_field = FixedLengthString(size=3, encoding="ascii")
+
+        self.field = StatusField()
 
     def test_validating_valid_value(self):
         self.field.validate(Status.ACTIVE)
@@ -89,6 +107,23 @@ class TestStringEnum(unittest.TestCase):
         self.assertEqual(self.field.unwrap(Status.ACTIVE), "active")
         self.assertEqual(self.field.unwrap(Status.INACTIVE), "inactive")
         self.assertEqual(self.field.unwrap(Status.PENDING), "pending")
+
+    def test_subclass_required(self):
+        with self.assertRaises(TypeError):
+            StringEnum()
+
+    def test_subclass_missing_attributes(self):
+        class MissingEnum(StringEnum):
+            inner_field = FixedLengthString(size=3, encoding="ascii")
+
+        with self.assertRaises(TypeError):
+            MissingEnum()
+
+        class MissingField(StringEnum):
+            enum_class = Status
+
+        with self.assertRaises(TypeError):
+            MissingField()
 
 
 class TestFlags(unittest.TestCase):

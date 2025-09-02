@@ -8,9 +8,9 @@ from steel.fields.numbers import Integer
 class Structure:
     value = Integer(size=1)
 
-    def __init__(self, value: int):
+    def __init__(self, value: int | None):
         # Just to give a way to optionally set an instance value
-        if value > 0:
+        if value is not None:
             self.value = value
 
 
@@ -34,8 +34,8 @@ class TestFieldDescriptor(unittest.TestCase):
 
     def test_unassigned_attribute(self):
         # Test that the descriptor returns itself when no instance value is set
-        instance = Structure(0)
-        self.assertIsInstance(instance.value, Integer)
+        instance = Structure(None)
+        self.assertIsInstance(Structure.value, Integer)
 
     def test_assigned_attribute(self):
         # Test that the field does *not* get returned if an instance value is set
@@ -60,6 +60,18 @@ class ConversionBehavior(unittest.TestCase):
     def test_wrapping(self):
         field = IntegerString()
         result = field.wrap(3)
+
+        self.assertEqual(result, "3")
+
+    def test_packing(self):
+        field = IntegerString()
+        result = field.pack("3")
+
+        self.assertEqual(result, b"\x03\x00")
+
+    def test_unpacking(self):
+        field = IntegerString()
+        result = field.unpack(b"\x03\x00")
 
         self.assertEqual(result, "3")
 

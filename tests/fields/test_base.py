@@ -35,11 +35,12 @@ class TestFieldDescriptor(unittest.TestCase):
     def test_unassigned_attribute(self):
         # Test that the descriptor returns itself when no instance value is set
         instance = Structure(None)
-        self.assertIsInstance(Structure.value, Integer)
+        self.assertIsInstance(instance.value, Integer)
 
     def test_assigned_attribute(self):
         # Test that the field does *not* get returned if an instance value is set
         instance = Structure(10)
+        instance.value = 30
         self.assertIsInstance(instance.value, int)
 
 

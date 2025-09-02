@@ -12,62 +12,26 @@ class ValidationError(RuntimeError):
 
 
 class Field[T]:
-    # This looks weird, but it's absolutely critical for type-checking.
-    # Fields get assigned to the class as instances of this Field class,
-    # but when accessed as attributes on a Structure instance, they'd be
-    # native Python types, like str, int and float. Ultimately, the type
-    # of the class attribute differs from the instance attribute, even
-    # though type-checking tools can't recognize that difference.
-    #
-    # This __get__ method turns the field into a descriptor, so that code
-    # runs whenever the attribute gets accessed, both as a class attribute
-    # and as an instance attribute. This code can be understood and
-    # interpreted by type checkers, providing an opportunity to add extra
-    # type hints about how these attributes will behave. Specifically, the
-    # return type(s) of this method will drive how type checkers see the
-    # attributes in use elsewhere.
-    #
-    # There are two return types here:
-    #  * Self represents the same type as the field itself. It's Field in
-    #    this class, but Self will also reflect subclasses defined elsewhere.
-    #  * T represents the native Python type that will be used in instances.
-    #    Field is a generic, with the Python type supplied as part of each
-    #    definition. So for a field that uses int, it'd be a subclass of
-    #    Field[int], which is copied here, which affects how type checkers
-    #    interpret that field on instances later down the road.
+    def __set_name__(self, owner: type, name: str) -> None:
+        self.name = name
 
     @overload
-    def __get__(self, obj: None, cls: Any) -> Self: ...
+    def __get__(self, obj: None, owner: type) -> Self: ...
 
     @overload
-    def __get__(self, obj: object, cls: Any) -> T: ...
+    def __get__(self, obj: object, owner: type) -> T: ...
 
     @overload
-    def __get__(self, obj: Any, cls: Any) -> Self: ...
+    def __get__(self, obj: Any, owner: type) -> Self: ...
 
-    def __get__(self, obj: Optional[Any], cls: Any) -> Self | T:
-        # This method itself also needs to return a value that satisfies its
-        # own return types. If it doesn't return anything, it would implicitly
-        # return None, which isn't part of the type definition (but can be done
-        # later by using typing's Optional[] type). And T isn't known at the
-        # time of the method's definition, so that only leaves Self, which is
-        # thankfully easy to return directly.
-        #
-        # But this code has to actually run, and it will *always* return self.
-        # It has nothing to do with T or the final attribute value. What makes
-        # this work anyway is that Python will only call the __get__ method if
-        # there's no accmopanying value in the instance's __dict__. So as soon
-        # as a value is assigned to the attribute, Python will ignore this
-        # descriptor anyway. And if a value is *not* assigned to the instance
-        # attribute, returning the field object itself is also the right thing
-        # to do, matching Python's natural behavior without the descriptor.
+    def __get__(self, obj: Optional[Any], owner: Any) -> Self | T:
+        if obj is None or self.name not in obj.__dict__:
+            return self
+        value: T = obj.__dict__.get(self.name)
+        return value
 
-        # Ideally this would raise an AttributeError if called on an instance,
-        # because that would mean that a value hasn't yet been set. But rigth
-        # now, there are fields that depend on having a separate internal
-        # field, which is accessed as an attribute of the field itself, causing
-        # all sorts of things to fail.
-        return self
+    def __set__(self, instance: Any, value: T) -> None:
+        instance.__dict__[self.name] = value
 
     @abstractmethod
     def validate(self, value: T) -> None:

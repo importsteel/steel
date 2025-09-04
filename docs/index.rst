@@ -33,3 +33,4 @@ wide range of field definitions.
    getting-started
    structures
    fields
+   errors

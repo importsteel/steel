@@ -1,0 +1,6 @@
+################
+ Error Handling
+################
+
+-  **ConfigurationError**
+-  **ValidationError**

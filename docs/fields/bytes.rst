@@ -42,6 +42,8 @@ Additional parameters
 ************
 
 A pre-determined sequence of bytes to expect at the specified position within a data stream.
+Validation ensures that the bytes in the stream match what's expected, and this field will also
+write out the appropriate bytes if not provided in a structure.
 
 Additional parameters
 =====================

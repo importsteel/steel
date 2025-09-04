@@ -148,6 +148,13 @@ class TestFixedBytes(unittest.TestCase):
         buffer.seek(0)
         self.assertEqual(buffer.read(), b"\xff\xff\xff\xff")
 
+    def test_default_value(self):
+        # The fixed bytes are for validation only
+        # Attribute values will still be written as-is
+        field = FixedBytes(b"\x00\x01\x02\x03")
+        value = field.get_default()
+        self.assertEqual(value, b"\x00\x01\x02\x03")
+
     def test_common_patterns(self):
         # Test magic numbers
         magic_field = FixedBytes(b"RIFF")

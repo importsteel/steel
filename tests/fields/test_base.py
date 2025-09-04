@@ -1,11 +1,12 @@
 import unittest
 from io import BytesIO
 
+from steel.base import Structure
 from steel.fields.base import WrappedField
 from steel.fields.numbers import Integer
 
 
-class Structure:
+class Example(Structure):
     value = Integer(size=1)
 
     def __init__(self, value: int | None):
@@ -30,16 +31,17 @@ class IntegerString(WrappedField[str, int]):
 class TestFieldDescriptor(unittest.TestCase):
     def test_class_attribute(self):
         # Test that the descriptor returns itself when accessed on class
-        self.assertIsInstance(Structure.value, Integer)
+        self.assertIsInstance(Example.value, Integer)
 
     def test_unassigned_attribute(self):
         # Test that the descriptor returns itself when no instance value is set
-        instance = Structure(None)
-        self.assertIsInstance(instance.value, Integer)
+        instance = Example(None)
+        with self.assertRaises(AttributeError):
+            instance.value
 
     def test_assigned_attribute(self):
         # Test that the field does *not* get returned if an instance value is set
-        instance = Structure(10)
+        instance = Example(10)
         instance.value = 30
         self.assertIsInstance(instance.value, int)
 

@@ -62,9 +62,19 @@ class Field[T, D = None](FieldType[T, D]):
     def __get__(self, obj: Any, owner: type) -> Self: ...
 
     def __get__(self, obj: Optional[Any], owner: Any) -> Self | T:
-        if obj is None or self.name not in obj.__dict__:
+        if obj is None:
             return self
-        value: T = obj.__dict__.get(self.name)
+
+        if not isinstance(obj, Structure):
+            return self
+
+        try:
+            value: T = obj.__dict__[self.name]
+        except KeyError:
+            try:
+                return self.get_default()
+            except ConfigurationError:
+                raise AttributeError(self.name)
         return value
 
     @overload
@@ -77,6 +87,9 @@ class Field[T, D = None](FieldType[T, D]):
 
     def __set__(self, instance: Any, value: Any) -> None:
         instance.__dict__[self.name] = value
+
+    def get_default(self) -> T:
+        raise ConfigurationError("No default value available")
 
     @abstractmethod
     def validate(self, value: T) -> None:

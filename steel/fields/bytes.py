@@ -24,3 +24,7 @@ class FixedBytes(Bytes):
     def validate(self, value: bytes) -> None:
         if value != self.value:
             raise ValidationError(f"Expected {self.value!r}; got {value!r}")
+
+    def get_default(self) -> bytes:
+        print("Getting default", self.value)
+        return self.value

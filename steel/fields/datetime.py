@@ -4,15 +4,16 @@ from datetime import (
 )
 from zoneinfo import ZoneInfo
 
-from .base import WrappedField
+from .base import Option, WrappedField
 from .numbers import Float, Integer
 
 
 class Timestamp(WrappedField[datetime, int]):
     inner_field = Integer(size=4)
-    timezone: ZoneInfo
+    timezone: Option[ZoneInfo]
 
     def __init__(self, timezone: ZoneInfo = ZoneInfo("UTC")):
+        super().__init__()
         self.timezone = timezone
 
     def validate(self, value: datetime) -> None:

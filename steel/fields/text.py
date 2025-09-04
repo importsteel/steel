@@ -1,13 +1,12 @@
-from abc import ABC
 from io import BufferedIOBase
 
-from .base import ConfigurationError, Field, ValidationError
+from .base import ConfigurationError, Field, Option, ValidationError
 
 
-class EncodedString(ABC, Field[str]):
-    encoding: str
+class EncodedString(Field[str]):
+    encoding: Option[str]
 
-    def __init__(self, /, encoding: str):
+    def __init__(self, *, encoding: str = "utf8"):
         self.encoding = encoding
 
     def validate(self, value: str) -> None:
@@ -25,8 +24,9 @@ class EncodedString(ABC, Field[str]):
 
 class FixedLengthString(EncodedString):
     size: int
+    padding: Option[bytes]
 
-    def __init__(self, /, encoding: str, size: int, padding: bytes = b"\x00"):
+    def __init__(self, *, size: int, encoding: str = "utf8", padding: bytes = b"\x00"):
         super().__init__(encoding=encoding)
         if len(padding) > 1:
             raise ConfigurationError(
@@ -49,7 +49,7 @@ class LenghIndexedString(EncodedString):
     # return an int type.
     size_field: Field[int]
 
-    def __init__(self, /, size: Field[int], encoding: str):
+    def __init__(self, *, size: Field[int], encoding: str = "utf8"):
         super().__init__(encoding=encoding)
         self.size_field = size
 
@@ -81,8 +81,9 @@ class LenghIndexedString(EncodedString):
 
 class TerminatedString(EncodedString):
     size: int
+    terminator: Option[bytes]
 
-    def __init__(self, /, encoding: str, terminator: bytes = b"\x00"):
+    def __init__(self, *, encoding: str = "utf8", terminator: bytes = b"\x00"):
         super().__init__(encoding=encoding)
         if len(terminator) > 1:
             raise ConfigurationError(

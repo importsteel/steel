@@ -67,9 +67,11 @@ Define a structure
 This touches on a few differet features right away, so let's break it down. First, we import Steel.
 
 .. code:: python
+
    import steel
 
-One of the early fields in the format is a version identifer, so we create a simple custom field to interpret that version.
+One of the early fields in the format is a version identifer, so we create a simple custom field to
+interpret that version.
 
 .. code:: python
 
@@ -80,7 +82,6 @@ One of the early fields in the format is a version identifer, so we create a sim
    class GifVersion(steel.StringEnum):
       inner_field = steel.FixedLengthString(size=3, encoding='ascii')
       enum_class = GifVersion
-
 
 Read Binary Data
 ================

@@ -6,7 +6,7 @@ authors = [
 ]
 description = "A Python framework for describing, reading and writing binary file formats"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -43,6 +43,7 @@ exclude_lines = [
     "raise NotImplementedError",
     "pass",
     ": \\.\\.\\.",
+    "if TYPE_CHECKING",
 ]
 
 [tool.mypy]

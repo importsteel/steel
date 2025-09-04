@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from io import BufferedIOBase
-from typing import Any, Optional, Self, overload
+from types import GenericAlias
+from typing import Any, Generator, Optional, Self, TypeAliasType, overload
 
 from ..base import Structure
 from ..types import FieldType
@@ -14,9 +15,42 @@ class ValidationError(RuntimeError):
     pass
 
 
+# This type can be used to identify field options that can be overriden
+# at the class level.
+type Option[T] = T
+
+
 class Field[T, D = None](FieldType[T, D]):
+    @classmethod
+    def __init_subclass__(cls: type["Field[T, D]"]) -> None:
+        super.__init_subclass__()
+        cls.all_options = dict(cls.get_options())
+
+    def __new__(cls: type[Self], *args: Any, **kwargs: Any) -> Self:
+        obj: Self = super().__new__(cls)
+        obj.specified_options = kwargs
+        return obj
+
     def __set_name__(self, owner: type, name: str) -> None:
         self.name = name
+
+    @classmethod
+    def get_options(cls) -> Generator[tuple[str, Any]]:
+        for indent, name, annotation in Field.get_all_annotations(cls):
+            if not isinstance(annotation, GenericAlias):
+                continue
+            origin: TypeAliasType = annotation.__origin__  # type: ignore[assignment]
+            if origin is Option:
+                yield name, annotation.__args__[0]
+
+    @staticmethod
+    def get_all_annotations(cls: type, indent: int = 0) -> Generator[tuple[int, str, Any]]:
+        if not hasattr(cls, "__annotations__"):
+            return
+        for name, annotation in cls.__annotations__.items():
+            yield indent, name, annotation
+        for base in cls.__bases__:
+            yield from Field.get_all_annotations(base, indent=indent + 1)
 
     @overload
     def __get__(self, obj: None, owner: type) -> Self: ...

@@ -7,26 +7,26 @@ from steel.fields.numbers import Float, Integer
 
 class TestInteger(unittest.TestCase):
     def test_validate_number_too_big(self):
-        field = Integer(size=1, signed=False, endianness=">")
+        field = Integer(size=1, signed=False)
 
         field.validate(255)
         with self.assertRaises(ValidationError):
             field.validate(256)
 
-        field = Integer(size=1, signed=True, endianness=">")
+        field = Integer(size=1, signed=True)
 
         field.validate(127)
         with self.assertRaises(ValidationError):
             field.validate(128)
 
     def test_validate_number_too_small(self):
-        field = Integer(size=1, signed=False, endianness=">")
+        field = Integer(size=1, signed=False)
 
         field.validate(0)
         with self.assertRaises(ValidationError):
             field.validate(-1)
 
-        field = Integer(size=1, signed=True, endianness=">")
+        field = Integer(size=1, signed=True)
 
         field.validate(-128)
         with self.assertRaises(ValidationError):
@@ -101,6 +101,11 @@ class TestInteger(unittest.TestCase):
 
         field = Integer(size=8, endianness="<")
         self.assertEqual(field.unpack(b"\xf0\xde\xbc\x9a\x78\x56\x34\x12"), 0x123456789ABCDEF0)
+
+    def test_endianness_options(self):
+        # Ensure that all appropriate field options get put in the right spot,
+        # so they can be overridden by class options
+        self.assertIn("endianness", Integer.all_options)
 
 
 class TestFloat(unittest.TestCase):

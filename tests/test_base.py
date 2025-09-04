@@ -1,4 +1,5 @@
 import unittest
+from io import BytesIO
 
 import steel
 from steel.base import Configuration
@@ -147,3 +148,28 @@ class TestAssigningValues(unittest.TestCase):
         self.assertEqual(instance.integer, 1)
         with self.assertRaises(AttributeError):
             instance.string
+
+
+class TestBufferIO(unittest.TestCase):
+    def test_reading(self):
+        class Example(steel.Structure):
+            integer = steel.Integer(size=1)
+            string = steel.TerminatedString()
+
+        input = b"\x01one\x00"
+        instance = Example.read(BytesIO(input))
+
+        self.assertEqual(instance.integer, 1)
+        self.assertEqual(instance.string, "one")
+
+    def test_writing(self):
+        class Example(steel.Structure):
+            integer = steel.Integer(size=1)
+            string = steel.TerminatedString()
+
+        instance = Example(integer=1, string="one")
+        output = BytesIO()
+        size = instance.write(output)
+
+        self.assertEqual(output.getvalue(), b"\x01one\x00")
+        self.assertEqual(size, 5)

@@ -2,7 +2,8 @@ from abc import abstractmethod
 from io import BufferedIOBase
 from typing import Any, Optional, Self, overload
 
-import steel.base
+from ..base import Structure
+from ..types import FieldType
 
 
 class ConfigurationError(RuntimeError):
@@ -13,16 +14,15 @@ class ValidationError(RuntimeError):
     pass
 
 
-class Field[T]:
+class Field[T, D = None](FieldType[T, D]):
     def __set_name__(self, owner: type, name: str) -> None:
         self.name = name
 
     @overload
     def __get__(self, obj: None, owner: type) -> Self: ...
 
-    # This may need to change later, to avoid circular imports, but we'll see
     @overload
-    def __get__(self, obj: "steel.base.Structure", owner: type) -> T: ...
+    def __get__(self, obj: Structure, owner: type) -> T: ...
 
     @overload
     def __get__(self, obj: Any, owner: type) -> Self: ...
@@ -34,7 +34,7 @@ class Field[T]:
         return value
 
     @overload
-    def __set__(self, instance: "steel.base.Structure", value: T) -> None:
+    def __set__(self, instance: Structure, value: T) -> None:
         pass
 
     @overload
@@ -80,11 +80,12 @@ class ExplicitlySizedField[T](Field[T]):
         return self.unpack(packed), len(packed)
 
 
-class WrappedField[T, D]:
-    inner_field: Field[D]
+class WrappedField[T, D](Field[T, None]):
+    inner_field: Field[D, Any]
 
-    def get_inner_field(self) -> Field[D]:
-        field: Field[D] = self.__class__.__dict__["inner_field"]
+    def get_inner_field(self) -> Field[D, Any]:
+        # Skip the descriptors when access this internally
+        field: Field[D, Any] = self.__class__.__dict__["inner_field"]
         return field
 
     @abstractmethod

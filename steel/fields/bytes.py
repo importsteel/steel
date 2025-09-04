@@ -24,7 +24,3 @@ class FixedBytes(Bytes):
     def validate(self, value: bytes) -> None:
         if value != self.value:
             raise ValidationError(f"Expected {self.value!r}; got {value!r}")
-
-    def pack(self, value: bytes) -> bytes:
-        # Ignore the input value and always write the fixed bytes
-        return self.value

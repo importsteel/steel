@@ -139,22 +139,14 @@ class TestFixedBytes(unittest.TestCase):
         self.assertEqual(bytes_read, 2)
 
     def test_write(self):
+        # The fixed bytes are for validation only
+        # Attribute values will still be written as-is
         field = FixedBytes(b"\x00\x01\x02\x03")
         buffer = BytesIO()
-        # FixedBytes write should use the field's value, not the provided value
         bytes_written = field.write(b"\xff\xff\xff\xff", buffer)
         self.assertEqual(bytes_written, 4)
         buffer.seek(0)
-        self.assertEqual(buffer.read(), b"\x00\x01\x02\x03")
-
-    def test_write_ignores_input(self):
-        field = FixedBytes(b"MAGIC")
-        buffer = BytesIO()
-        # Even if we pass different bytes, it should write the fixed value
-        bytes_written = field.write(b"OTHER", buffer)
-        self.assertEqual(bytes_written, 5)
-        buffer.seek(0)
-        self.assertEqual(buffer.read(), b"MAGIC")
+        self.assertEqual(buffer.read(), b"\xff\xff\xff\xff")
 
     def test_common_patterns(self):
         # Test magic numbers

@@ -82,7 +82,7 @@ class TestOverridingOptions(unittest.TestCase):
 
     def test_field_options_override_class_options(self):
         class Example(steel.Structure, endianness="<", encoding="utf8"):
-            integer: steel.Integer = steel.Integer(size=1, endianness=">")
+            integer = steel.Integer(size=1, endianness=">")
             string = steel.TerminatedString(terminator=b"\xff", encoding="ascii")
 
         self.assertEqual(
@@ -115,3 +115,35 @@ class TestOverridingOptions(unittest.TestCase):
         self.assertEqual(Example.ascii.encoding, "ascii")
         self.assertEqual(Example.padding_00.padding, b"\x00")
         self.assertEqual(Example.padding_ff.padding, b"\xff")
+
+
+class TestAssigningValues(unittest.TestCase):
+    def test_instantiation(self):
+        class Example(steel.Structure):
+            integer = steel.Integer(size=1)
+            string = steel.TerminatedString()
+
+        instance = Example(integer=1, string="one")
+        self.assertEqual(instance.integer, 1)
+        self.assertEqual(instance.string, "one")
+
+    def test_post_instantiation(self):
+        class Example(steel.Structure):
+            integer = steel.Integer(size=1)
+            string = steel.TerminatedString()
+
+        instance = Example()
+        instance.integer = 1
+        instance.string = "one"
+        self.assertEqual(instance.integer, 1)
+        self.assertEqual(instance.string, "one")
+
+    def test_missing_attribute(self):
+        class Example(steel.Structure):
+            integer = steel.Integer(size=1)
+            string = steel.TerminatedString()
+
+        instance = Example(integer=1)
+        self.assertEqual(instance.integer, 1)
+        with self.assertRaises(AttributeError):
+            instance.string

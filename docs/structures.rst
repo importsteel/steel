@@ -7,7 +7,7 @@ defined as Python classes, with fields as their attributes, in a pattern that's 
 from other Python frameworks.
 
 Discussing structures requirings including some fields, but for more information on how they work,
-as well as specific field types, see :doc:`<fields>`.
+as well as specific field types, see :doc:`fields`.
 
 **********************
  Structure Definition

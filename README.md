@@ -35,20 +35,12 @@ print(f"Version: {header.version}")
 print(f"Size: {header.width}x{header.height}")
 ```
 
-## Field Types
-
-### Requirements
+## Requirements
 - Python 3.13+
-- pytest (for testing)
 
-### Development Setup
+## Development Setup
 ```bash
 pip install -e ".[dev]"
-```
-
-### Running Tests
-```bash
-pytest
 ```
 
 ## Links

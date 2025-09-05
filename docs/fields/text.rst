@@ -16,7 +16,7 @@ Parameters
 ==========
 
 -  **encoding**: Character encoding to use (default: ``'utf8'``). These match Python's native
-   encodings. *Can be overridden at the structure level.*
+   encodings. *Can be specified at the structure level.*
 
 Character vs Byte Length
 ========================
@@ -49,7 +49,7 @@ Additional Parameters
 
 -  **padding**: Byte to use to pad shorter strings to fit the full length of the field. When reading
    from a data stream, this padding will automatically be stripped out, and when writing to a
-   stream, it will be added as necessary. (default: ``b'\x00'``) *Can be overridden at the structure
+   stream, it will be added as necessary. (default: ``b'\x00'``) *Can be specified at the structure
    level.*
 
 .. code:: python
@@ -97,7 +97,7 @@ Additional Parameters
 =====================
 
 -  **terminator**: Byte sequence that marks the end of the string data. (default: ``b'\x00'``) *Can
-   be overridden at the structure level.*
+   be specified at the structure level.*
 
 The terminator must be exactly one byte long. When reading, the terminator byte is consumed from the
 stream but not included in the returned string value. When writing, the terminator is automatically

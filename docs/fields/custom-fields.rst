@@ -15,13 +15,24 @@ Fields are simply Python classes, with a few specific characteristics:
    -  Subclass from a common ancestor
    -  A set of common methods and properties
 
-Subclassing ``Field[T]``
-========================
+``Field[T, D = None]``
+======================
 
-The base field class is ``steel.fields.base.Field``. This is a generic type, which uses a parameter
-to describe the native Python type it handles. So a data field to manage strings would subclass
-``Field[str]``, while a field to store timestmaps would use ``Field[datetime]``. Throughout the
-remainder of these docs, this generic type paraemter will be referred to as ``T``.
+The base field class is ``steel.fields.base.Field[T, D]``. As a generic type, it uses parameters to
+describe the native Python types it handles.
+
+   -  ``T`` is the native **type** that outside code would use to interact with this field. A field
+      to manage strings would subclass ``Field[str]``, while a field to store timestmaps would use
+      ``Field[datetime]``.
+
+   -  ``D`` is another native Python type representing an underlying **data** type that's being
+      wrapped by the field. See :ref:`wrappedfield` for more details.
+
+.. note::
+
+   ``D`` defaults to ``None``, allowing most fields to ignore it and access the base class as
+   ``Field[T]``. This is how most of the details in this document will refer to ``Field``, unless
+   ``D`` is relevant for a specific use case.
 
 Existing fields already subclass the appropriate type, so sublcassing any of them will share the
 same type hinting as its parent class.
@@ -126,6 +137,8 @@ can be determined by the length of that sequence.
 A specific form of ``Field`` base class that adds a ``size`` attribute. With a fixed size as part of
 the field's configuration, this class provides a default ``read()`` implementation that reads
 exactly ``self.size`` bytes and passes the result straight to the ``unpack()`` method.
+
+.. _wrappedfield:
 
 ``WrappedField[T, D]``
 ======================

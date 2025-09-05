@@ -72,7 +72,6 @@ class TestTimestamp(unittest.TestCase):
         self.assertEqual(dt_utc, dt_det)
 
     def test_timezone_into_utc(self):
-        det_field = Timestamp(timezone=ZoneInfo("America/Detroit"))
         utc_field = Timestamp(timezone=ZoneInfo("UTC"))
 
         # First create a datetime in Detroit

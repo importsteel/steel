@@ -10,8 +10,8 @@ could contain multiple attributes, value lists or nested structures.
  Using Fields
 **************
 
-Fields are assigned as attributes to a ``Structure``'s class definition. This assignment allows for
-naming individual fields, as well as configuring each field as necessary:
+Fields are assigned as attributes to a :doc:`Structure <structures>`'s class definition. This
+assignment allows for naming individual fields, as well as configuring each field as necessary:
 
 .. code:: python
 

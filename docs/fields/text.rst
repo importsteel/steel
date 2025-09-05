@@ -15,8 +15,8 @@ All text fields share a common API that's independent of how the bytes are arran
 Parameters
 ==========
 
--  **encoding**: Character encoding to use (e.g., 'utf-8', 'ascii', 'latin-1'). These match Python's
-   native encodings, and there is no default.
+-  **encoding**: Character encoding to use (default: ``'utf8'``). These match Python's native
+   encodings. *Can be overridden at the structure level.*
 
 Character vs Byte Length
 ========================
@@ -49,7 +49,8 @@ Additional Parameters
 
 -  **padding**: Byte to use to pad shorter strings to fit the full length of the field. When reading
    from a data stream, this padding will automatically be stripped out, and when writing to a
-   stream, it will be added as necessary. (default: ``b'\x00'``)
+   stream, it will be added as necessary. (default: ``b'\x00'``) *Can be overridden at the structure
+   level.*
 
 .. code:: python
 
@@ -95,7 +96,8 @@ string continues until the terminator byte is encountered in the data stream.
 Additional Parameters
 =====================
 
--  **terminator**: Byte sequence that marks the end of the string data. (default: ``b'\x00'``)
+-  **terminator**: Byte sequence that marks the end of the string data. (default: ``b'\x00'``) *Can
+   be overridden at the structure level.*
 
 The terminator must be exactly one byte long. When reading, the terminator byte is consumed from the
 stream but not included in the returned string value. When writing, the terminator is automatically

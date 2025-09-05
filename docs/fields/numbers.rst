@@ -23,7 +23,7 @@ Parameters
 
 -  **signed**: Whether to interpret as signed integer (default: False)
 
--  **endianness**: Byte order
+-  **endianness**: Byte order *Can be overridden at the structure level.*
 
    -  ``'<'`` for little-endian (least significant byte first)
    -  ``'>'`` for big-endian (most significant byte first)

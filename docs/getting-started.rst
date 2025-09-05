@@ -21,14 +21,26 @@ Install Steel using pip:
 
 Steel consists of two main features: structures and fields.
 
--  *Structures* are collections of fields, in a specific order. They build up the overall format of
-   the data, and provide utilities for reading, writing and validating data as a whole. Example
-   structures could be the PNG image format, and also just the header chunk from the PNG image
-   format.
+Structures
+==========
 
--  *Fields* are the building blocks of Steel structures. They define how data is encoded, decoded,
-   and validated. Some examples are `Integer`, `String` and `Flags`. Fields can reference other
-   fields or even other structures.
+Structures are collections of fields, in a specific order. They build up the overall format of the
+data, and provide utilities for reading, writing and validating data as a whole. Example structures
+could be the entire PNG image format, or perhaps just the header chunk from the PNG image format.
+
+.. warning::
+
+   By calling them structures, it's easy to try to think of them in the same way as the `struct`
+   paradigm in C. While there are undoubtedly some similarities, Steel was not designed to resemble
+   C, so any such similarities are coincidental. Looking at Steel through the lens of experience
+   with C will likely lead to confusion.
+
+Fields
+======
+
+Fields are the building blocks of Steel structures. They define how data is encoded, decoded, and
+validated. Some examples are `Integer`, `String` and `Flags`. Fields can reference other fields or
+even other structures.
 
 *************
  Basic Usage
@@ -77,3 +89,10 @@ Write Data
 
    with open('header.gif', 'wb') as f:
       image.write(f)
+
+************
+ Learn More
+************
+
+Now that you know the basics, you can read more about :doc:`structures` and :doc:`fields` in their
+own documentation.

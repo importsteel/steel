@@ -144,10 +144,21 @@ class TestAssigningValues(unittest.TestCase):
             integer = steel.Integer(size=1)
             string = steel.TerminatedString()
 
-        instance = Example(integer=1)
+        instance = Example(integer=1)  # Missing string
         self.assertEqual(instance.integer, 1)
         with self.assertRaises(AttributeError):
             instance.string
+
+    def test_writing_with_missing_attribute(self):
+        class Example(steel.Structure):
+            integer = steel.Integer(size=1)
+            string = steel.TerminatedString()
+
+        output = BytesIO()
+        instance = Example(integer=1)  # Missing string
+        self.assertEqual(instance.integer, 1)
+        with self.assertRaises(AttributeError):
+            instance.write(output)
 
 
 class TestBufferIO(unittest.TestCase):

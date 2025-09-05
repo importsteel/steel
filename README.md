@@ -1,13 +1,14 @@
 # Steel
 
-Steel provides an elegant way to define binary data structures using Python type hints and field descriptors. It's designed to make working with binary file formats intuitive and type-safe.
+Steel provides an elegant way to define binary data structures using Python type hints and field
+descriptors. It's designed to make working with binary file formats intuitive and type-safe.
 
 ## Features
 
 - **Declarative**: Define binary structures using familiar Python class syntax
-- **Fully type-hinted**: Leverages Python's type hinting system for better IDE support
+- **Fully type-hinted**: Leverage your IDE to interact with binary data
 - **Flexible**: Support for different data types, sizes, and endianness
-- **Modern**: Built for Python 3.12+ with modern typing features
+- **Modern**: Built for Python 3.13+ with modern typing features
 
 ## Installation
 
@@ -20,21 +21,24 @@ pip install steel
 ```python
 import steel
 
-class Header(steel.Structure):
-    title = steel.String(8)
-    size = steel.Integer(2, endianness='>')
+class GIF(steel.Structure):
+    magic = steel.FixedBytes(b'GIF')
+    version = steel.FixedLengthString(size=3)
+    width = steel.Integer(size=2)
+    height = steel.Integer(size=2)
 
-    def __init__(self, title: str, size: int):
-        self.title = title
-        self.size = size
+with open('logo.gif', 'rb') as f:
+    image = GIF.read(f)
 
-header = Header(title='Title', size=10)
+print(f"Version: {image.version}")
+print(f"Version: {header.version}")
+print(f"Size: {header.width}x{header.height}")
 ```
 
 ## Field Types
 
 ### Requirements
-- Python 3.12+
+- Python 3.13+
 - pytest (for testing)
 
 ### Development Setup

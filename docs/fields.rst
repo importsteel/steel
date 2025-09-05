@@ -124,6 +124,7 @@ Steel provides fields in various categories, with detailed documentation for eac
    fields/numbers
    fields/text
    fields/bytes
+   fields/datetime
 
 And custom fields can be added as well:
 

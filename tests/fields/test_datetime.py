@@ -47,13 +47,53 @@ class TestTimestamp(unittest.TestCase):
         self.assertEqual(buffer.getvalue(), b"\xc0u\xb1c")
         self.assertEqual(size, 4)
 
-    def test_timezone_handling(self):
+    def test_timezone_out_of_utc(self):
         utc_field = Timestamp(timezone=ZoneInfo("UTC"))
         det_field = Timestamp(timezone=ZoneInfo("America/Detroit"))
-        dt_utc = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
 
-        det_utc = det_field.wrap(utc_field.unwrap(dt_utc))
-        self.assertEqual(dt_utc, det_utc)
+        # First create a datetime in UTC
+        dt_utc = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+        self.assertEqual(dt_utc.tzinfo, ZoneInfo("UTC"))
+
+        # Unwrap it to an int, then re-wrap in a Detroit timezone
+        dt_det = det_field.wrap(utc_field.unwrap(dt_utc))
+        self.assertEqual(dt_det.tzinfo, ZoneInfo("America/Detroit"))
+
+        # Everything should match *except* the hour
+        self.assertEqual(dt_det.year, dt_utc.year)
+        self.assertEqual(dt_det.month, dt_utc.month)
+        self.assertEqual(dt_det.day, dt_utc.day)
+        # In January, Detroit is 5 hours behind UTC
+        self.assertEqual(dt_det.hour, dt_utc.hour - 5)
+        self.assertEqual(dt_det.minute, dt_utc.minute)
+        self.assertEqual(dt_det.second, dt_utc.second)
+
+        # Yet the two will compare equal, because timezone information is retained
+        self.assertEqual(dt_utc, dt_det)
+
+    def test_timezone_into_utc(self):
+        det_field = Timestamp(timezone=ZoneInfo("America/Detroit"))
+        utc_field = Timestamp(timezone=ZoneInfo("UTC"))
+
+        # First create a datetime in Detroit
+        dt_det = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("America/Detroit"))
+        self.assertEqual(dt_det.tzinfo, ZoneInfo("America/Detroit"))
+
+        # Unwrap it to an int, then re-wrap in UTC
+        dt_utc = utc_field.wrap(utc_field.unwrap(dt_det))
+        self.assertEqual(dt_utc.tzinfo, ZoneInfo("UTC"))
+
+        # Everything should match *except* the hour
+        self.assertEqual(dt_utc.year, dt_det.year)
+        self.assertEqual(dt_utc.month, dt_det.month)
+        self.assertEqual(dt_utc.day, dt_det.day)
+        # In January, UTC is 5 hours ahead of Detroit
+        self.assertEqual(dt_utc.hour, dt_det.hour + 5)
+        self.assertEqual(dt_utc.minute, dt_det.minute)
+        self.assertEqual(dt_utc.second, dt_det.second)
+
+        # Yet the two will compare equal, because timezone information is retained
+        self.assertEqual(dt_utc, dt_det)
 
     def test_different_timestamps(self):
         field = Timestamp()

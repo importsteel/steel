@@ -20,6 +20,18 @@ class Timestamp(WrappedField[datetime, int]):
         pass
 
     def unwrap(self, value: datetime) -> int:
+        if value.tzinfo is None:
+            value = datetime(
+                year=value.year,
+                month=value.month,
+                day=value.day,
+                hour=value.hour,
+                minute=value.minute,
+                second=value.second,
+                microsecond=value.microsecond,
+                tzinfo=self.timezone,  # Add the correct timezone
+            )
+
         return int(value.timestamp())
 
     def wrap(self, value: int) -> datetime:

@@ -108,6 +108,29 @@ class TestTimestamp(unittest.TestCase):
         roundtrip = field.wrap(field.unwrap(future))
         self.assertEqual(int(future.timestamp()), int(roundtrip.timestamp()))
 
+    def test_naive_datetime(self):
+        # Try this in multiple timezones, to ensure that it doesn't just
+        # get lucky by hitting the local machine's default timezone
+        timezone_list = [
+            "America/Detroit",
+            "America/Los_Angeles",
+            "UTC",
+        ]
+
+        # Test in a matrix, so that the timezone of the field isn't always the same as the datetime.
+        for field_timezone in timezone_list:
+            for date_timezone in timezone_list:
+                with self.subTest(field_timezone=field_timezone, date_timezone=date_timezone):
+                    field = Timestamp(timezone=ZoneInfo(field_timezone))
+                    # Creat one with a timezone and one without
+                    dt_tz = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo(field_timezone))
+                    dt_naive = datetime(2023, 1, 1, 12, 0, 0)
+
+                    # See what happens!
+                    naive_timestamp = field.unwrap(dt_naive)
+                    converted = field.wrap(naive_timestamp)
+                    self.assertEqual(converted, dt_tz)
+
 
 class TestDuration(unittest.TestCase):
     def test_wrapping(self):

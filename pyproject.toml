@@ -1,12 +1,15 @@
 [project]
 name = "steel"
 version = "0.2"
-authors = [
-  { name="Ginger Hawthorne", email="gulopine@gmail.com" },
-]
 description = "A Python framework for describing, reading and writing binary file formats"
 readme = "README.md"
+authors = [
+    { name = "Ginger Hawthorne", email = "gulopine@gmail.com" }
+]
 requires-python = ">=3.13"
+dependencies = []
+license = "BSD-3-Clause-No-Military-License"
+license-files = ["LICEN[CS]E*"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -16,19 +19,18 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: System :: Filesystems",
 ]
-license = "BSD-3-Clause-No-Military-License"
-license-files = ["LICEN[CS]E*"]
-dependencies = [
-    "coverage>=7.10.5",
-    "mkdocs>=1.6.1",
-]
 
 [project.urls]
 Homepage = "https://importsteel.org/"
 Issues = "https://github.com/gulopine/steel/issues"
 
+[build-system]
+requires = ["uv_build>=0.8.12,<0.9.0"]
+build-backend = "uv_build"
+
 [dependency-groups]
 dev = [
+    "coverage>=7.10.5",
     "mypy>=1.17.1",
     "rstfmt>=0.0.14",
     "ruff>=0.12.11",

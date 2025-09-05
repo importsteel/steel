@@ -76,8 +76,7 @@ Read Data
       image = GIF.read(f)
 
    print(f"Version: {image.version}")
-   print(f"Version: {header.version}")
-   print(f"Size: {header.width}x{header.height}")
+   print(f"Size: {image.width}x{image.height}")
 
 Write Data
 ==========

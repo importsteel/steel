@@ -71,7 +71,7 @@ class TestOverridingOptions(unittest.TestCase):
 
     def test_options_specified_in_structure(self):
         class Example(steel.Structure, endianness="<", encoding="utf8"):
-            integer: steel.Integer = steel.Integer(size=1)
+            integer = steel.Integer(size=1)
             string = steel.TerminatedString()
 
         self.assertEqual(Example.integer.specified_options, {"size": 1})

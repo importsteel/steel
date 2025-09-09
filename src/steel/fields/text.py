@@ -1,6 +1,7 @@
 from io import BufferedIOBase
 
-from .base import ConfigurationError, Field, Option, ValidationError
+from ..types import ConfigurationError, ValidationError
+from .base import Field, Option
 
 
 class EncodedString(Field[str]):
@@ -34,6 +35,13 @@ class FixedLengthString(EncodedString):
             )
         self.size = size
         self.padding = padding
+
+    def validate(self, value: str) -> None:
+        print(value)
+        packed_value = super().pack(value)
+        print(packed_value)
+        if len(packed_value) > self.size:
+            raise ValidationError(f"{value} encodes to more than {self.size} characters")
 
     def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
         # Even though this matches the behavior of ExplicitlySizedField,

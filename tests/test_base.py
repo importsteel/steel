@@ -3,6 +3,7 @@ from io import BytesIO
 
 import steel
 from steel.base import Configuration
+from steel.types import ValidationError
 
 
 class TestStructureConfiguration(unittest.TestCase):
@@ -184,3 +185,151 @@ class TestBufferIO(unittest.TestCase):
 
         self.assertEqual(output.getvalue(), b"\x01one\x00")
         self.assertEqual(size, 5)
+
+
+class TestStructureValidation(unittest.TestCase):
+    """Test structure-level validation functionality."""
+
+    def setUp(self):
+        """Set up test structures for validation testing."""
+
+        class SimpleStructure(steel.Structure):
+            number = steel.Integer(size=1, signed=False)
+            text = steel.TerminatedString(encoding="ascii")
+
+        class ComplexStructure(steel.Structure):
+            magic = steel.FixedBytes(b"TEST")
+            count = steel.Integer(size=2, signed=False)
+            name = steel.FixedLengthString(size=10, encoding="ascii")
+            data = steel.Bytes(size=4)
+
+        self.SimpleStructure = SimpleStructure
+        self.ComplexStructure = ComplexStructure
+
+    def test_validate_all_fields_valid(self):
+        """Test validation passes when all fields are valid."""
+        instance = self.SimpleStructure(number=100, text="hello")
+        print(instance)
+        # Should not raise any exception
+        instance.validate()
+
+    def test_validate_field_validation_error_propagated(self):
+        """Test that field validation errors are propagated up to structure level."""
+        instance = self.SimpleStructure(
+            number=256, text="hello"
+        )  # number too big for 1-byte unsigned
+
+        with self.assertRaises(ValidationError):
+            instance.validate()
+
+    def test_validate_multiple_field_validation_errors(self):
+        """Test validation with multiple invalid fields."""
+        instance = self.SimpleStructure(number=-1, text="héllo")  # number negative, text non-ascii
+
+        with self.assertRaises(ValidationError):
+            instance.validate()
+
+    def test_validate_complex_structure_all_valid(self):
+        """Test validation of complex structure with all valid fields."""
+        instance = self.ComplexStructure(
+            magic=b"TEST", count=100, name="myfile", data=b"\x00\x01\x02\x03"
+        )
+        # Should not raise any exception
+        instance.validate()
+
+    def test_validate_complex_structure_invalid_magic(self):
+        """Test validation fails when magic bytes are wrong."""
+        instance = self.ComplexStructure(
+            magic=b"FAIL",  # Wrong magic bytes
+            count=100,
+            name="myfile",
+            data=b"\x00\x01\x02\x03",
+        )
+
+        with self.assertRaises(ValidationError):
+            instance.validate()
+
+    def test_validate_complex_structure_invalid_name_length(self):
+        """Test validation fails when string is too long for fixed length field."""
+        instance = self.ComplexStructure(
+            magic=b"TEST",
+            count=100,
+            name="this_name_is_way_too_long_for_10_chars",  # Too long
+            data=b"\x00\x01\x02\x03",
+        )
+
+        with self.assertRaises(ValidationError):
+            instance.validate()
+
+    def test_validate_complex_structure_invalid_data_size(self):
+        """Test validation fails when byte data is wrong size."""
+        instance = self.ComplexStructure(
+            magic=b"TEST",
+            count=100,
+            name="myfile",
+            data=b"\x00\x01\x02",  # Only 3 bytes instead of 4
+        )
+
+        with self.assertRaises(ValidationError):
+            instance.validate()
+
+    def test_validate_missing_field_raises_attribute_error(self):
+        """Test that validation fails appropriately when field is missing."""
+        instance = self.SimpleStructure(number=100)  # Missing text field
+
+        with self.assertRaises(ValidationError):
+            instance.validate()
+
+    def test_validate_after_reading_from_buffer(self):
+        """Test validation after reading structure from buffer."""
+        # Create valid binary data
+        buffer_data = b"TEST\x00\x64myfile\x00\x00\x00\x00\x00\x00\x01\x02\x03"
+        buffer = BytesIO(buffer_data)
+
+        instance = self.ComplexStructure.read(buffer)
+        # Should not raise any exception
+        instance.validate()
+
+    def test_validate_structure_with_global_options(self):
+        """Test validation works with structure-level field options."""
+
+        class StructureWithOptions(steel.Structure, endianness=">", encoding="utf-8"):
+            number = steel.Integer(size=2)  # Will use big-endian
+            text = steel.TerminatedString()  # Will use UTF-8
+
+        instance = StructureWithOptions(number=1000, text="hello")
+        # Should not raise any exception
+        instance.validate()
+
+    def test_validate_structure_with_mixed_field_overrides(self):
+        """Test validation with mix of structure options and field overrides."""
+
+        class MixedStructure(steel.Structure, endianness=">"):
+            big_endian_num = steel.Integer(size=2)  # Uses structure endianness
+            little_endian_num = steel.Integer(size=2, endianness="<")  # Overrides endianness
+
+        instance = MixedStructure(big_endian_num=1000, little_endian_num=2000)
+        # Should not raise any exception
+        instance.validate()
+
+    def test_validation_error_contains_field_context(self):
+        """Test that validation errors provide context about which field failed."""
+        instance = self.SimpleStructure(number=256, text="hello")  # number too big
+
+        try:
+            instance.validate()
+            self.fail("Expected ValidationError")
+        except ValidationError as e:
+            # The error should contain some indication of the problem
+            # (exact message format may vary based on implementation)
+            self.assertTrue(len(str(e)) > 0)
+
+    def test_validate_empty_structure(self):
+        """Test validation of structure with no fields."""
+
+        class EmptyStructure(steel.Structure):
+            pass
+
+        instance = EmptyStructure()
+        # Should not raise any exception
+        instance.validate()

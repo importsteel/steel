@@ -1,7 +1,6 @@
 import unittest
 from io import BytesIO
 
-from steel.fields.base import ConfigurationError, ValidationError
 from steel.fields.numbers import Integer
 from steel.fields.text import (
     EncodedString,
@@ -9,6 +8,7 @@ from steel.fields.text import (
     LenghIndexedString,
     TerminatedString,
 )
+from steel.types import ConfigurationError, ValidationError
 
 
 class TestStringEncoding(unittest.TestCase):

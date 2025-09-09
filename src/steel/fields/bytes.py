@@ -1,4 +1,5 @@
-from .base import ExplicitlySizedField, ValidationError
+from ..types import ValidationError
+from .base import ExplicitlySizedField
 
 
 class Bytes(ExplicitlySizedField[bytes]):

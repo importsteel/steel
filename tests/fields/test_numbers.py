@@ -1,8 +1,8 @@
 import math
 import unittest
 
-from steel.fields.base import ValidationError
 from steel.fields.numbers import Float, Integer
+from steel.types import ValidationError
 
 
 class TestInteger(unittest.TestCase):

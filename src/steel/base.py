@@ -1,7 +1,7 @@
 from io import BufferedIOBase
 from typing import Any, ClassVar, TypeVar
 
-from .types import AnyField, FieldType
+from .types import AnyField, FieldType, ValidationError
 
 T = TypeVar("T", bound="Structure")
 
@@ -46,10 +46,17 @@ class Structure:
             for key in overrides:
                 setattr(field, key, options[key])
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, **kwargs: Any) -> None:
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def validate(self) -> None:
+        for field in self.__class__._config.fields.values():
+            if not hasattr(self, field.name):
+                raise ValidationError(f"{field.name} has no value")
+            value = getattr(self, field.name)
+            field.validate(value)
 
     @classmethod
     def read(cls: type[T], buffer: BufferedIOBase) -> T:

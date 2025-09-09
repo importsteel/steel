@@ -4,16 +4,7 @@ from types import GenericAlias
 from typing import Any, Generator, Optional, Self, TypeAliasType, overload
 
 from ..base import Structure
-from ..types import FieldType
-
-
-class ConfigurationError(RuntimeError):
-    pass
-
-
-class ValidationError(RuntimeError):
-    pass
-
+from ..types import ConfigurationError, FieldType
 
 # This type can be used to identify field options that can be overriden
 # at the class level.

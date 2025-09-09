@@ -1,7 +1,8 @@
 import struct
 from typing import Literal
 
-from .base import ExplicitlySizedField, Option, ValidationError
+from ..types import ValidationError
+from .base import ExplicitlySizedField, Option
 
 INTEGER_FORMATS = {1: "B", 2: "H", 4: "I", 8: "Q"}
 FLOAT_FORMATS = {2: "e", 4: "f", 8: "d"}

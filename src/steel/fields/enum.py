@@ -1,6 +1,7 @@
 from enum import Enum, Flag, IntEnum, StrEnum
 
-from .base import Field, ValidationError, WrappedField
+from ..types import ValidationError
+from .base import Field, WrappedField
 from .numbers import Integer
 
 

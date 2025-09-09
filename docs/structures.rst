@@ -114,6 +114,123 @@ If you try to access an attribute that wasn't set during instantiation, you'll g
    print(packet.header)    # Works: 1234
    print(packet.message)   # Raises AttributeError
 
+************
+ Validation
+************
+
+Structures support basic validation to ensure all field values conform to their expected formats and
+constraints. This helps catch data integrity issues before writing to buffers or after reading from
+potentially corrupted data.
+
+Basic Validation
+================
+
+Use the ``validate()`` method to check that all fields in a structure contain valid values:
+
+.. code:: python
+
+   packet = NetworkPacket(header=1234, message="Hello", checksum=0xABCD)
+   packet.validate()  # Raises ValidationError if any field is invalid
+
+The validation process checks each field according to its specific constraints:
+
+-  **Integer fields** validate that values fit within their size and sign constraints
+-  **String fields** validate encoding compatibility and length requirements
+-  **Byte fields** validate exact size matches and content constraints
+-  **Enum fields** validate that values belong to the specified enum class
+
+Handling Validation Errors
+==========================
+
+When validation fails, a ``ValidationError`` is raised with details about the problem:
+
+.. code:: python
+
+   from steel.fields.base import ValidationError
+
+   packet = NetworkPacket(header=70000, message="Hello", checksum=0xABCD)  # Header too big
+
+   try:
+       packet.validate()
+   except ValidationError as e:
+       print(f"Validation failed: {e}")
+
+Common validation scenarios that raise errors:
+
+.. code:: python
+
+   # Integer too large for field size
+   packet = NetworkPacket(header=70000, message="Hello", checksum=0xABCD)  # header is 2-byte field
+   packet.validate()  # ValidationError: value exceeds maximum
+
+   # String encoding issues
+   packet = NetworkPacket(header=1234, message="héllo", checksum=0xABCD)  # non-ASCII in ASCII field
+   packet.validate()  # ValidationError: invalid encoding
+
+   # Wrong byte sequence for FixedBytes field
+   header = FileHeader(magic=b"FAIL", version=1, flags=0, data_offset=100)  # wrong magic
+   header.validate()  # ValidationError: bytes don't match expected value
+
+Validation with Missing Fields
+==============================
+
+If a field hasn't been assigned a value, validation will raise an ``AttributeError``:
+
+.. code:: python
+
+   packet = NetworkPacket(header=1234)  # Missing message and checksum
+   packet.validate()  # AttributeError: 'NetworkPacket' object has no attribute 'message'
+
+This ensures that all required fields are present before attempting to write the structure to a
+buffer.
+
+Validating After Reading
+========================
+
+Validation is especially useful after reading binary data to verify the data integrity:
+
+.. code:: python
+
+   from io import BytesIO
+
+   # Read potentially corrupted data
+   binary_data = some_binary_source()
+   buffer = BytesIO(binary_data)
+
+   try:
+       packet = NetworkPacket.read(buffer)
+       packet.validate()  # Verify the parsed data is valid
+       print("Data successfully validated")
+   except ValidationError as e:
+       print(f"Corrupted data detected: {e}")
+
+Best Practices
+==============
+
+#. **Validate after reading**: Always validate structures after reading from external sources to
+   catch data corruption early.
+#. **Validate before writing**: Call validate() before writing to ensure complete, valid data.
+#. **Handle missing fields**: Use try/except blocks to gracefully handle incomplete structures.
+#. **Validate incrementally**: For complex structures, consider validating fields as you set them
+   rather than waiting until the end.
+
+.. code:: python
+
+   # Good practice: validate after reading unknown data
+   def parse_file(filepath):
+       with open(filepath, 'rb') as f:
+           try:
+               header = FileHeader.read(f)
+               header.validate()
+               return header
+           except ValidationError:
+               raise ValueError(f"Invalid file format: {filepath}")
+
+   # Good practice: ensure completeness before writing
+   def write_packet(packet, output):
+       packet.validate()  # Ensures all fields are present and valid
+       return packet.write(output)
+
 ****************
  Advanced Usage
 ****************

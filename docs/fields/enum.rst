@@ -99,7 +99,7 @@ own attributes.
 
    class FileTypeField(steel.StringEnum):
        enum_class = FileType
-       inner_field = steel.FixedLengthString(size=3, encoding="ascii")
+       wrapped_field = steel.FixedLengthString(size=3, encoding="ascii")
 
 Parameters
 ==========
@@ -108,7 +108,7 @@ Must be defined as class attributes when subclassing:
 
 -  **enum_class**: The ``StrEnum`` subclass defining valid string values
 
--  **inner_field**: A string field that defines how the enum value is stored. If this is a fixed
+-  **wrapped_field**: A string field that defines how the enum value is stored. If this is a fixed
    size, it should be large enough to store all of the values in the ``enum``, but this is not
    validated automatically.
 
@@ -126,7 +126,7 @@ Example Usage
 
    class ProtocolField(steel.StringEnum):
        enum_class = Protocol
-       inner_field = steel.TerminatedString(encoding="ascii")
+       wrapped_field = steel.TerminatedString(encoding="ascii")
 
    class NetworkConfig(steel.Structure):
        protocol = ProtocolField()

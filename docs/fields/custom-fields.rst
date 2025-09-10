@@ -152,7 +152,7 @@ internally, but presents a `datetime` object to external code.
 ``WrappedField`` expands on the existing ``Field`` base class to specify two distinct data types.
 ``T`` works like any other field, specifying the data type that consumers of this field will
 interact with. The extra ``D`` refers to the type of the wrapped field. The actual interaction with
-the data buffer will be handled by a field supplied as an ``inner_field`` class attribute.
+the data buffer will be handled by a field supplied as an ``wrapped_field`` class attribute.
 
 In the timestamp example, ``T`` would be ``datetime``, while ``D`` would be ``int``. This handles
 the necessary type hinting, and an ``Integer`` field would handle the interactions in code. All
@@ -161,7 +161,7 @@ that's left is to convert between ``datetime`` and ``int``.
 .. code:: python
 
    class Timestamp(WrappedField[datetime, int]):
-       inner_field = Integer(size=4)
+       wrapped_field = Integer(size=4)
 
        def wrap(self, value: int) -> datetime:
            return datetime.fromtimestamp(value)

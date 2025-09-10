@@ -9,7 +9,7 @@ from .numbers import Float, Integer
 
 
 class Timestamp(WrappedField[datetime, int]):
-    inner_field = Integer(size=4)
+    wrapped_field = Integer(size=4)
     timezone: Option[ZoneInfo]
 
     def __init__(self, timezone: ZoneInfo = ZoneInfo("UTC")):
@@ -39,7 +39,7 @@ class Timestamp(WrappedField[datetime, int]):
 
 
 class Duration(WrappedField[timedelta, float]):
-    inner_field = Float(size=4)
+    wrapped_field = Float(size=4)
 
     def validate(self, value: timedelta) -> None:
         pass

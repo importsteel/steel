@@ -16,7 +16,7 @@ class Example(Structure):
 
 
 class IntegerString(WrappedField[str, int]):
-    inner_field = Integer(size=2)
+    wrapped_field = Integer(size=2)
 
     def validate(self, value: str) -> None:
         pass
@@ -50,7 +50,7 @@ class ConversionBehavior(unittest.TestCase):
     def test_data_field_property(self):
         field = IntegerString()
 
-        self.assertIsInstance(field.inner_field, Integer)
+        self.assertIsInstance(field.wrapped_field, Integer)
 
     def test_reading(self):
         field = IntegerString()

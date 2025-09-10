@@ -6,7 +6,7 @@ from .numbers import Integer
 
 
 class EnumField[T: Enum, D](WrappedField[T, D]):
-    inner_field: Field[D]
+    wrapped_field: Field[D]
     enum_class: type[T]
 
     def __init__(self, enum_class: type[T]):
@@ -26,19 +26,19 @@ class EnumField[T: Enum, D](WrappedField[T, D]):
 
 
 class IntegerEnum(EnumField[IntEnum, int]):
-    inner_field: Field[int] = Integer(size=1)
+    wrapped_field: Field[int] = Integer(size=1)
 
 
 class StringEnum(EnumField[StrEnum, str]):
-    inner_field: Field[str]
+    wrapped_field: Field[str]
 
     def __init__(self) -> None:
         try:
-            self.inner_field
+            self.wrapped_field
             self.enum_class
         except AttributeError:
-            raise TypeError("StringEnum must be subclassed with inner_field and enum_class")
+            raise TypeError("StringEnum must be subclassed with wrapped_field and enum_class")
 
 
 class Flags(EnumField[Flag, int]):
-    inner_field: Field[int] = Integer(size=1)
+    wrapped_field: Field[int] = Integer(size=1)

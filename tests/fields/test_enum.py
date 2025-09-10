@@ -23,7 +23,7 @@ class Status(StrEnum):
 
 class StatusField(StringEnum):
     enum_class = Status
-    inner_field = FixedLengthString(size=3, encoding="ascii")
+    wrapped_field = FixedLengthString(size=3, encoding="ascii")
 
 
 class Permission(Flag):
@@ -72,7 +72,7 @@ class TestStringEnum(unittest.TestCase):
     def setUp(self):
         class StatusField(StringEnum):
             enum_class = Status
-            inner_field = FixedLengthString(size=3, encoding="ascii")
+            wrapped_field = FixedLengthString(size=3, encoding="ascii")
 
         self.field = StatusField()
 
@@ -114,7 +114,7 @@ class TestStringEnum(unittest.TestCase):
 
     def test_subclass_missing_attributes(self):
         class MissingEnum(StringEnum):
-            inner_field = FixedLengthString(size=3, encoding="ascii")
+            wrapped_field = FixedLengthString(size=3, encoding="ascii")
 
         with self.assertRaises(TypeError):
             MissingEnum()

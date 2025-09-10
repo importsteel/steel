@@ -118,12 +118,12 @@ class ExplicitlySizedField[T](Field[T]):
         return self.unpack(packed), len(packed)
 
 
-class WrappedField[T, D](Field[T, None]):
-    inner_field: Field[D, Any]
+class WrappedField[T, D](Field[T]):
+    wrapped_field: Field[D, Any]
 
-    def get_inner_field(self) -> Field[D, Any]:
+    def get_wrapped_field(self) -> Field[D, Any]:
         # Skip the descriptors when access this internally
-        field: Field[D, Any] = self.__class__.__dict__["inner_field"]
+        field: Field[D, Any] = self.__class__.__dict__["wrapped_field"]
         return field
 
     @abstractmethod
@@ -131,7 +131,7 @@ class WrappedField[T, D](Field[T, None]):
         raise NotImplementedError()
 
     def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
-        field = self.get_inner_field()
+        field = self.get_wrapped_field()
         value, size = field.read(buffer)
         return self.wrap(value), size
 
@@ -140,11 +140,11 @@ class WrappedField[T, D](Field[T, None]):
         raise NotImplementedError()
 
     def pack(self, value: T) -> bytes:
-        field = self.get_inner_field()
+        field = self.get_wrapped_field()
         return field.pack(self.unwrap(value))
 
     def unpack(self, value: bytes) -> T:
-        field = self.get_inner_field()
+        field = self.get_wrapped_field()
         return self.wrap(field.unpack(value))
 
     @abstractmethod
@@ -152,5 +152,5 @@ class WrappedField[T, D](Field[T, None]):
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:
-        field = self.get_inner_field()
+        field = self.get_wrapped_field()
         return field.write(self.unwrap(value), buffer)

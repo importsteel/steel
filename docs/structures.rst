@@ -19,16 +19,10 @@ A structure is defined by subclassing ``steel.Structure`` and declaring field at
 
    import steel
 
-   class Header(steel.Structure):
-      tag = steel.FixedBytes(b"DATA")
-      major_version = steel.Integer(size=1)
-      minor_version = steel.Integer(size=1)
-      created_date = steel.Timestamp(tz="utc")
-      title = steel.NullTerminatedString(encoding="ascii")
-
-      @property
-      def version(self) -> str:
-          f"{obj.major_version}.{obj.minor_version}"
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
 
 Each field in the structure corresponds to a piece of data that can be read or written in a
 predictable format. The order of fields must match the order that the data appears in the original
@@ -61,9 +55,15 @@ Use the ``read()`` class method to parse binary data:
 
 .. code:: python
 
+   import steel
    from io import BytesIO
 
-   binary_data = b"\xd2\x04Hello\x00\xcd\xab\x00\x00"
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
+
+   binary_data = b"\xd2\x04Hello\x00\xcd\xab"
    buffer = BytesIO(binary_data)
    packet = NetworkPacket.read(buffer)
 
@@ -77,6 +77,14 @@ Writing to Buffers
 Use the ``write()`` method to serialize data back to binary format:
 
 .. code:: python
+
+   import steel
+   from io import BytesIO
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
 
    packet = NetworkPacket(header=1234, message="Hello", checksum=0xABCD)
 
@@ -95,11 +103,12 @@ order of reading from buffers and writing to buffers:
 
 .. code:: python
 
-   class FileHeader(steel.Structure):
-       magic = steel.FixedBytes(size=4)      # Read/written first
-       version = steel.Integer(size=2)       # Read/written second
-       flags = steel.Integer(size=2)         # Read/written third
-       data_offset = steel.Integer(size=4)   # Read/written last
+   import steel
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)        # Read/written first
+       message = steel.NullTerminatedString(encoding="ascii")  # Read/written second
+       checksum = steel.Integer(size=2)      # Read/written third
 
 ****************
  Error Handling
@@ -109,6 +118,13 @@ If you try to access an attribute that wasn't set during instantiation, you'll g
 ``AttributeError``:
 
 .. code:: python
+
+   import steel
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
 
    packet = NetworkPacket(header=1234)  # Only header set
    print(packet.header)    # Works: 1234
@@ -129,6 +145,13 @@ Use the ``validate()`` method to check that all fields in a structure contain va
 
 .. code:: python
 
+   import steel
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
+
    packet = NetworkPacket(header=1234, message="Hello", checksum=0xABCD)
    packet.validate()  # Raises ValidationError if any field is invalid
 
@@ -146,7 +169,13 @@ When validation fails, a ``ValidationError`` is raised with details about the pr
 
 .. code:: python
 
+   import steel
    from steel.fields.base import ValidationError
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
 
    packet = NetworkPacket(header=70000, message="Hello", checksum=0xABCD)  # Header too big
 
@@ -159,6 +188,13 @@ Common validation scenarios that raise errors:
 
 .. code:: python
 
+   import steel
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
+
    # Integer too large for field size
    packet = NetworkPacket(header=70000, message="Hello", checksum=0xABCD)  # header is 2-byte field
    packet.validate()  # ValidationError: value exceeds maximum
@@ -167,19 +203,22 @@ Common validation scenarios that raise errors:
    packet = NetworkPacket(header=1234, message="héllo", checksum=0xABCD)  # non-ASCII in ASCII field
    packet.validate()  # ValidationError: invalid encoding
 
-   # Wrong byte sequence for FixedBytes field
-   header = FileHeader(magic=b"FAIL", version=1, flags=0, data_offset=100)  # wrong magic
-   header.validate()  # ValidationError: bytes don't match expected value
-
 Validation with Missing Fields
 ==============================
 
-If a field hasn't been assigned a value, validation will raise an ``AttributeError``:
+If a field hasn't been assigned a value, validation will also raise a ``ValidationError``:
 
 .. code:: python
 
+   import steel
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
+
    packet = NetworkPacket(header=1234)  # Missing message and checksum
-   packet.validate()  # AttributeError: 'NetworkPacket' object has no attribute 'message'
+   packet.validate()  # ValidationError
 
 This ensures that all required fields are present before attempting to write the structure to a
 buffer.
@@ -191,7 +230,14 @@ Validation is especially useful after reading binary data to verify the data int
 
 .. code:: python
 
+   import steel
    from io import BytesIO
+   from steel.fields.base import ValidationError
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
 
    # Read potentially corrupted data
    binary_data = some_binary_source()
@@ -216,13 +262,21 @@ Best Practices
 
 .. code:: python
 
+   import steel
+   from steel.fields.base import ValidationError
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
+
    # Good practice: validate after reading unknown data
    def parse_file(filepath):
        with open(filepath, 'rb') as f:
            try:
-               header = FileHeader.read(f)
-               header.validate()
-               return header
+               packet = NetworkPacket.read(f)
+               packet.validate()
+               return packet
            except ValidationError:
                raise ValueError(f"Invalid file format: {filepath}")
 
@@ -242,9 +296,11 @@ Structures can be configured with global options that affect all fields on that 
 
 .. code:: python
 
+   import steel
+
    class NetworkPacket(steel.Structure, endianness=">", encoding="ascii"):
        header = steel.Integer(size=2)  # Will encode big-endian values
-       message = steel.TerminatedString()  # Will use ASCII encoding
+       message = steel.NullTerminatedString()  # Will use ASCII encoding
        checksum = steel.Integer(size=4, endianness="<")  # Overrides to little-endian
 
 .. note::
@@ -286,13 +342,20 @@ which can be useful for introspection and dynamic field processing.
 
 .. code:: python
 
+   import steel
+
+   class NetworkPacket(steel.Structure):
+       header = steel.Integer(size=2)
+       message = steel.NullTerminatedString(encoding="ascii")
+       checksum = steel.Integer(size=2)
+
    # Access all fields
-   for name, field in Example._config.fields.items():
+   for name, field in NetworkPacket._config.fields.items():
        print(f"Field {name}: {field.__class__.__name__}")
 
    # Access specific field
-   integer_field = Example._config["integer"]
-   print(f"Integer field size: {integer_field.size}")
+   header_field = NetworkPacket._config["header"]
+   print(f"Header field size: {header_field.size}")
 
 This configuration option has the following attributes:
 

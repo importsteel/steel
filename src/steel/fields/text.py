@@ -37,9 +37,7 @@ class FixedLengthString(EncodedString):
         self.padding = padding
 
     def validate(self, value: str) -> None:
-        print(value)
         packed_value = super().pack(value)
-        print(packed_value)
         if len(packed_value) > self.size:
             raise ValidationError(f"{value} encodes to more than {self.size} characters")
 
@@ -62,7 +60,7 @@ class LenghIndexedString(EncodedString):
         self.size_field = size
 
     def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
-        # It would be easier to access the size field as `self.size`, but
+        # It would be easier to access the size field as `self.size_field`, but
         # when accessed as an attribute, its type hint also includes `int` as
         # a valid type, which doesn't have the necessary `read()` method.
         # Accessing it via the instance dictionary bypasses the descriptor
@@ -72,10 +70,7 @@ class LenghIndexedString(EncodedString):
         size_field: Field[int] = self.__dict__["size_field"]
 
         size, size_len = size_field.read(buffer)
-        # raise RuntimeError(size)
         encoded = buffer.read(size)
-        # raise RuntimeError(len(encoded))
-        # print(len(encoded), encoded)
         return self.unpack(encoded), size_len + len(encoded)
 
     def pack(self, value: str) -> bytes:

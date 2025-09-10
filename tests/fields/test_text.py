@@ -1,6 +1,7 @@
 import unittest
 from io import BytesIO
 
+from steel.base import Structure
 from steel.fields.numbers import Integer
 from steel.fields.text import (
     EncodedString,
@@ -73,6 +74,28 @@ class TestFixedLengthString(unittest.TestCase):
         data = buffer.read()
         self.assertEqual(data, b"hello")
 
+    def test_get_size(self):
+        class SizeStructure(Structure):
+            text = FixedLengthString(size=20, encoding="ascii")
+
+        structure = SizeStructure(text="hello")
+        size = SizeStructure.text.get_size(structure)
+
+        self.assertEqual(size, 20)
+
+    def test_different_size_values(self):
+        class SizeStructure(Structure):
+            text = FixedLengthString(size=20, encoding="ascii")
+
+        short = SizeStructure(text="hello")
+        long = SizeStructure(text="hello world")
+        too_long = SizeStructure(text="hello to the big blue world")
+
+        # Always the specified size, no matter the length of the string
+        self.assertEqual(SizeStructure.text.get_size(short), 20)
+        self.assertEqual(SizeStructure.text.get_size(long), 20)
+        self.assertEqual(SizeStructure.text.get_size(too_long), 20)
+
 
 class TestLenghIndexedString(unittest.TestCase):
     def test_reading(self):
@@ -113,6 +136,26 @@ class TestLenghIndexedString(unittest.TestCase):
         buffer.seek(0)
         data = buffer.getvalue()
         self.assertEqual(data, b"\x05hello")
+
+    def test_get_size(self):
+        class SizeStructure(Structure):
+            text = LenghIndexedString(size=Integer(size=2), encoding="ascii")
+
+        structure = SizeStructure(text="hello")
+        size = SizeStructure.text.get_size(structure)
+
+        # Size includes the 2-byte length at the beginning
+        self.assertEqual(size, 7)
+
+    def test_different_size_fields(self):
+        class SizeStructure(Structure):
+            short = LenghIndexedString(size=Integer(size=1), encoding="ascii")
+            long = LenghIndexedString(size=Integer(size=4), encoding="ascii")
+
+        structure = SizeStructure(short="hello", long="hello")
+
+        self.assertEqual(SizeStructure.short.get_size(structure), 6)
+        self.assertEqual(SizeStructure.long.get_size(structure), 9)
 
 
 class TestTerminatedString(unittest.TestCase):
@@ -170,3 +213,14 @@ class TestTerminatedString(unittest.TestCase):
         buffer.seek(0)
         data = buffer.getvalue()
         self.assertEqual(data, b"hello\x00")
+
+    def test_get_size(self):
+        class SizeStructure(Structure):
+            text = TerminatedString(encoding="ascii")
+
+        # Test TerminatedString get_size returns minimum size (terminator)
+        structure = SizeStructure(text="hello")
+        size = SizeStructure.text.get_size(structure)
+
+        # Size includes the terminator
+        self.assertEqual(size, 6)

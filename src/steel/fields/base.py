@@ -43,6 +43,10 @@ class Field[T, D = None](FieldType[T, D]):
         for base in cls.__bases__:
             yield from Field.get_all_annotations(base, indent=indent + 1)
 
+    @abstractmethod
+    def get_size(self, structure: Structure) -> int:
+        raise NotImplementedError()
+
     @overload
     def __get__(self, obj: None, owner: type) -> Self: ...
 
@@ -113,6 +117,9 @@ class ExplicitlySizedField[T](Field[T]):
     def __init__(self, /, size: int):
         self.size = size
 
+    def get_size(self, structure: Structure) -> int:
+        return self.size
+
     def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
         packed = buffer.read(self.size)
         return self.unpack(packed), len(packed)
@@ -125,6 +132,9 @@ class WrappedField[T, D](Field[T]):
         # Skip the descriptors when access this internally
         field: Field[D, Any] = self.__class__.__dict__["wrapped_field"]
         return field
+
+    def get_size(self, structure: Structure) -> int:
+        return self.get_wrapped_field().get_size(structure)
 
     @abstractmethod
     def validate(self, value: T) -> None:

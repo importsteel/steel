@@ -1,5 +1,7 @@
+from abc import abstractmethod
 from io import BufferedIOBase
 
+from ..base import Structure
 from ..types import ConfigurationError, ValidationError
 from .base import Field, Option
 
@@ -9,6 +11,14 @@ class EncodedString(Field[str]):
 
     def __init__(self, *, encoding: str = "utf8"):
         self.encoding = encoding
+
+    @abstractmethod
+    def get_size(self, structure: Structure) -> int:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
+        raise NotImplementedError()
 
     def validate(self, value: str) -> None:
         try:
@@ -36,6 +46,9 @@ class FixedLengthString(EncodedString):
         self.size = size
         self.padding = padding
 
+    def get_size(self, structure: Structure) -> int:
+        return self.size
+
     def validate(self, value: str) -> None:
         packed_value = super().pack(value)
         if len(packed_value) > self.size:
@@ -58,6 +71,13 @@ class LenghIndexedString(EncodedString):
     def __init__(self, *, size: Field[int], encoding: str = "utf8"):
         super().__init__(encoding=encoding)
         self.size_field = size
+
+    def get_size(self, structure: Structure) -> int:
+        # Packing the text value will automatically account for the
+        # addition of the length field.
+        # FIXME: Might be worth a different API to make this more efficient
+        value = getattr(structure, self.name)
+        return len(self.pack(value))
 
     def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
         # It would be easier to access the size field as `self.size_field`, but
@@ -93,6 +113,13 @@ class TerminatedString(EncodedString):
                 f"String terminator may only contain one byte; got {len(terminator)}"
             )
         self.terminator = terminator
+
+    def get_size(self, structure: Structure) -> int:
+        # Packing the text value will automatically account for the
+        # addition of the terminator.
+        # FIXME: Might be worth a different API to make this more efficient
+        value = getattr(structure, self.name)
+        return len(self.pack(value))
 
     def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
         char = buffer.read(1)

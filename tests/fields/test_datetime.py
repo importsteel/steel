@@ -3,7 +3,12 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
+from steel.base import Structure
 from steel.fields.datetime import Duration, Timestamp
+
+
+class EmptyStructure(Structure):
+    pass
 
 
 class TestTimestamp(unittest.TestCase):
@@ -130,6 +135,15 @@ class TestTimestamp(unittest.TestCase):
                     converted = field.wrap(naive_timestamp)
                     self.assertEqual(converted, dt_tz)
 
+    def test_get_size(self):
+        # Test that Timestamp delegates get_size to wrapped Integer field
+        field = Timestamp(timezone=ZoneInfo("UTC"))
+        structure = EmptyStructure()
+        size = field.get_size(structure)
+
+        # Timestamp uses Integer(size=4)
+        self.assertEqual(size, 4)
+
 
 class TestDuration(unittest.TestCase):
     def test_wrapping(self):
@@ -215,3 +229,12 @@ class TestDuration(unittest.TestCase):
                     roundtrip.total_seconds(),
                     places=5,
                 )
+
+    def test_get_size(self):
+        # Test that Duration delegates get_size to wrapped Float field
+        field = Duration()
+        structure = EmptyStructure()
+        size = field.get_size(structure)
+
+        # Duration uses Float(size=4)
+        self.assertEqual(size, 4)

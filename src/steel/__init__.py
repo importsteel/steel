@@ -16,3 +16,5 @@ from .fields.text import FixedLengthString as FixedLengthString
 from .fields.text import LenghIndexedString as LenghIndexedString
 from .fields.text import PascalString as PascalString
 from .fields.text import TerminatedString as TerminatedString
+from .types import ConfigurationError as ConfigurationError
+from .types import ValidationError as ValidationError

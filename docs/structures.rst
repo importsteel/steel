@@ -138,6 +138,12 @@ Structures support basic validation to ensure all field values conform to their 
 constraints. This helps catch data integrity issues before writing to buffers or after reading from
 potentially corrupted data.
 
+.. important::
+
+   Validation is _not_ performed automatically. Many projects don't need it, and many more don't
+   need it to happen every time a structure is written out, so it's a separate step. For cases that
+   do need it, validation is sipmle to perform, so this shouldn't be too onerous a requirement.
+
 Basic Validation
 ================
 
@@ -155,12 +161,8 @@ Use the ``validate()`` method to check that all fields in a structure contain va
    packet = NetworkPacket(header=1234, message="Hello", checksum=0xABCD)
    packet.validate()  # Raises ValidationError if any field is invalid
 
-The validation process checks each field according to its specific constraints:
-
--  **Integer fields** validate that values fit within their size and sign constraints
--  **String fields** validate encoding compatibility and length requirements
--  **Byte fields** validate exact size matches and content constraints
--  **Enum fields** validate that values belong to the specified enum class
+The validation process checks that each field has a value and is valid, according to its specific
+constraints. See the documentation for each field for details on its validation behavior.
 
 Handling Validation Errors
 ==========================
@@ -170,7 +172,6 @@ When validation fails, a ``ValidationError`` is raised with details about the pr
 .. code:: python
 
    import steel
-   from steel.fields.base import ValidationError
 
    class NetworkPacket(steel.Structure):
        header = steel.Integer(size=2)
@@ -181,7 +182,7 @@ When validation fails, a ``ValidationError`` is raised with details about the pr
 
    try:
        packet.validate()
-   except ValidationError as e:
+   except steel.ValidationError as e:
        print(f"Validation failed: {e}")
 
 Common validation scenarios that raise errors:
@@ -195,13 +196,17 @@ Common validation scenarios that raise errors:
        message = steel.NullTerminatedString(encoding="ascii")
        checksum = steel.Integer(size=2)
 
-   # Integer too large for field size
-   packet = NetworkPacket(header=70000, message="Hello", checksum=0xABCD)  # header is 2-byte field
+   packet = NetworkPacket(header=70000, message="Hello", checksum=0xABCD)
    packet.validate()  # ValidationError: value exceeds maximum
 
-   # String encoding issues
-   packet = NetworkPacket(header=1234, message="héllo", checksum=0xABCD)  # non-ASCII in ASCII field
+   packet = NetworkPacket(header=1234, message="héllo", checksum=0xABCD)
    packet.validate()  # ValidationError: invalid encoding
+
+.. note::
+
+   If multiple fields are invalid, _one_ `ValidationError` will be raised, for the field field that
+   failed to validate. A future update may include an API to retrieve multiple validation errors in
+   one pass.
 
 Validation with Missing Fields
 ==============================
@@ -226,13 +231,12 @@ buffer.
 Validating After Reading
 ========================
 
-Validation is especially useful after reading binary data to verify the data integrity:
+Validation is also useful after reading binary data to verify the data integrity:
 
 .. code:: python
 
    import steel
    from io import BytesIO
-   from steel.fields.base import ValidationError
 
    class NetworkPacket(steel.Structure):
        header = steel.Integer(size=2)
@@ -247,23 +251,30 @@ Validation is especially useful after reading binary data to verify the data int
        packet = NetworkPacket.read(buffer)
        packet.validate()  # Verify the parsed data is valid
        print("Data successfully validated")
-   except ValidationError as e:
+   except steel.ValidationError as e:
        print(f"Corrupted data detected: {e}")
+
+.. warning::
+
+   This approach only works if all the fields can at least read the data into the structure. If any
+   field fails to even get that far (such as invalid text for a specified encoding), field-specific
+   exceptions can be raised during `.read()`, so you should prepare for that as well.
 
 Best Practices
 ==============
 
-#. **Validate after reading**: Always validate structures after reading from external sources to
-   catch data corruption early.
 #. **Validate before writing**: Call validate() before writing to ensure complete, valid data.
 #. **Handle missing fields**: Use try/except blocks to gracefully handle incomplete structures.
 #. **Validate incrementally**: For complex structures, consider validating fields as you set them
    rather than waiting until the end.
+#. **Validate after reading**: Always validate structures after reading from external sources to
+   catch data corruption early.
+#. **Prepare for exceptions during reading**: Don't assume that every file can be read well enough
+   to be able to call `.validate()` on the result.
 
 .. code:: python
 
    import steel
-   from steel.fields.base import ValidationError
 
    class NetworkPacket(steel.Structure):
        header = steel.Integer(size=2)
@@ -277,7 +288,7 @@ Best Practices
                packet = NetworkPacket.read(f)
                packet.validate()
                return packet
-           except ValidationError:
+           except steel.ValidationError:
                raise ValueError(f"Invalid file format: {filepath}")
 
    # Good practice: ensure completeness before writing
@@ -289,10 +300,15 @@ Best Practices
  Advanced Usage
 ****************
 
-Configuring all the fields in a structure
+Configuring fields at the structure level
 =========================================
 
-Structures can be configured with global options that affect all fields on that structure.
+Structures can contain many fields with similar configuration options, such as byte ordering or text
+encoding. You can configure each of these fields individually, but to simplify the structure
+definition, you may also configure these options at the structure level. Structures can be
+configured with global options that affect all fields on that structure. In addition to supplying
+`steel.Structure` as a base class, you can specify many options as keyword arguments when defining
+the class.
 
 .. code:: python
 
@@ -305,7 +321,8 @@ Structures can be configured with global options that affect all fields on that 
 
 .. note::
 
-   Options specified on individual fields take priority over anything specified on the structure.
+   Option specified on the structure will override any defaults defined in the fields, but
+   configuring individual fields will take priority over anything specified on the structure.
 
 This is especially helpful for large structures that repeat a lot of the same kind of field, because
 a format is typically consistent about how its data is represented. Configuring these options on the

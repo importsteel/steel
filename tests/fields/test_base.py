@@ -99,6 +99,6 @@ class ConversionBehavior(unittest.TestCase):
         field = IntegerString()
         structure = Example(None)
         size = field.get_size(structure)
-        
+
         # Integer field has size=2
         self.assertEqual(size, 2)

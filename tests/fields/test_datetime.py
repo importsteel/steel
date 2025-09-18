@@ -3,12 +3,7 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
-from steel.base import Structure
 from steel.fields.datetime import Duration, Timestamp
-
-
-class EmptyStructure(Structure):
-    pass
 
 
 class TestTimestamp(unittest.TestCase):
@@ -138,8 +133,7 @@ class TestTimestamp(unittest.TestCase):
     def test_get_size(self):
         # Test that Timestamp delegates get_size to wrapped Integer field
         field = Timestamp(timezone=ZoneInfo("UTC"))
-        structure = EmptyStructure()
-        size = field.get_size(structure)
+        size, cache = field.get_size(BytesIO())
 
         # Timestamp uses Integer(size=4)
         self.assertEqual(size, 4)
@@ -233,8 +227,7 @@ class TestDuration(unittest.TestCase):
     def test_get_size(self):
         # Test that Duration delegates get_size to wrapped Float field
         field = Duration()
-        structure = EmptyStructure()
-        size = field.get_size(structure)
+        size, cache = field.get_size(BytesIO())
 
         # Duration uses Float(size=4)
         self.assertEqual(size, 4)

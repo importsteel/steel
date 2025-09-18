@@ -1,14 +1,10 @@
 import unittest
 from enum import Flag, IntEnum, StrEnum, auto
+from io import BytesIO
 
-from steel.base import Structure
 from steel.fields.enum import Flags, IntegerEnum, StringEnum
 from steel.fields.text import FixedLengthString
 from steel.types import ValidationError
-
-
-class EmptyStructure(Structure):
-    pass
 
 
 class ByteOrder(IntEnum):
@@ -74,8 +70,7 @@ class TestIntegerEnum(unittest.TestCase):
 
     def test_get_size(self):
         # Test that Flags delegates get_size to wrapped Integer field
-        structure = EmptyStructure()
-        size = self.field.get_size(structure)
+        size, cache = self.field.get_size(BytesIO())
 
         # IntegerEnum uses Integer(size=1) by default
         self.assertEqual(size, 1)
@@ -140,8 +135,7 @@ class TestStringEnum(unittest.TestCase):
 
     def test_get_size(self):
         # Test that Flags delegates get_size to wrapped Integer field
-        structure = EmptyStructure()
-        size = self.field.get_size(structure)
+        size, cache = self.field.get_size(BytesIO())
 
         self.assertEqual(size, 3)
 
@@ -205,8 +199,7 @@ class TestFlags(unittest.TestCase):
 
     def test_get_size(self):
         # Test that Flags delegates get_size to wrapped Integer field
-        structure = EmptyStructure()
-        size = self.field.get_size(structure)
+        size, cache = self.field.get_size(BytesIO())
 
         # Flags uses Integer(size=1) by default
         self.assertEqual(size, 1)

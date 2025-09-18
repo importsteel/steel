@@ -97,8 +97,7 @@ class ConversionBehavior(unittest.TestCase):
     def test_get_size(self):
         # Test that WrappedField delegates get_size to wrapped field
         field = IntegerString()
-        structure = Example(None)
-        size = field.get_size(structure)
+        size, cache = field.get_size(BytesIO())
 
         # Integer field has size=2
         self.assertEqual(size, 2)

@@ -1,7 +1,6 @@
 import unittest
 from io import BytesIO
 
-from steel.base import Structure
 from steel.fields.numbers import Integer
 from steel.fields.text import (
     EncodedString,
@@ -75,26 +74,27 @@ class TestFixedLengthString(unittest.TestCase):
         self.assertEqual(data, b"hello")
 
     def test_get_size(self):
-        class SizeStructure(Structure):
-            text = FixedLengthString(size=20, encoding="ascii")
+        field = FixedLengthString(size=20, encoding="ascii")
 
-        structure = SizeStructure(text="hello")
-        size = SizeStructure.text.get_size(structure)
+        size, cache = field.get_size(BytesIO(b"hello"))
 
         self.assertEqual(size, 20)
 
     def test_different_size_values(self):
-        class SizeStructure(Structure):
-            text = FixedLengthString(size=20, encoding="ascii")
-
-        short = SizeStructure(text="hello")
-        long = SizeStructure(text="hello world")
-        too_long = SizeStructure(text="hello to the big blue world")
+        field = FixedLengthString(size=20, encoding="ascii")
 
         # Always the specified size, no matter the length of the string
-        self.assertEqual(SizeStructure.text.get_size(short), 20)
-        self.assertEqual(SizeStructure.text.get_size(long), 20)
-        self.assertEqual(SizeStructure.text.get_size(too_long), 20)
+        size, cache = field.get_size(BytesIO(b"hello"))
+        self.assertEqual(size, 20)
+        self.assertIsNone(cache)
+
+        size, cache = field.get_size(BytesIO(b"hello world"))
+        self.assertEqual(size, 20)
+        self.assertIsNone(cache)
+
+        size, cache = field.get_size(BytesIO(b"hello to the big blue world"))
+        self.assertEqual(size, 20)
+        self.assertIsNone(cache)
 
 
 class TestLenghIndexedString(unittest.TestCase):
@@ -138,24 +138,21 @@ class TestLenghIndexedString(unittest.TestCase):
         self.assertEqual(data, b"\x05hello")
 
     def test_get_size(self):
-        class SizeStructure(Structure):
-            text = LenghIndexedString(size=Integer(size=2), encoding="ascii")
+        field = LenghIndexedString(size=Integer(size=2), encoding="ascii")
 
-        structure = SizeStructure(text="hello")
-        size = SizeStructure.text.get_size(structure)
+        size, cache = field.get_size(BytesIO(b"\x05\x00hello"))
 
         # Size includes the 2-byte length at the beginning
         self.assertEqual(size, 7)
 
     def test_different_size_fields(self):
-        class SizeStructure(Structure):
-            short = LenghIndexedString(size=Integer(size=1), encoding="ascii")
-            long = LenghIndexedString(size=Integer(size=4), encoding="ascii")
+        field = LenghIndexedString(size=Integer(size=1), encoding="ascii")
+        size, cache = field.get_size(BytesIO(b"\x05hello"))
+        self.assertEqual(size, 6)
 
-        structure = SizeStructure(short="hello", long="hello")
-
-        self.assertEqual(SizeStructure.short.get_size(structure), 6)
-        self.assertEqual(SizeStructure.long.get_size(structure), 9)
+        field = LenghIndexedString(size=Integer(size=4), encoding="ascii")
+        size, cache = field.get_size(BytesIO(b"\x05\x00\x00\x00hello"))
+        self.assertEqual(size, 9)
 
 
 class TestTerminatedString(unittest.TestCase):
@@ -215,12 +212,11 @@ class TestTerminatedString(unittest.TestCase):
         self.assertEqual(data, b"hello\x00")
 
     def test_get_size(self):
-        class SizeStructure(Structure):
-            text = TerminatedString(encoding="ascii")
+        field = TerminatedString(encoding="ascii")
 
         # Test TerminatedString get_size returns minimum size (terminator)
-        structure = SizeStructure(text="hello")
-        size = SizeStructure.text.get_size(structure)
+        size, cache = field.get_size(BytesIO(b"hello"))
 
         # Size includes the terminator
         self.assertEqual(size, 6)
+        self.assertEqual(cache, "hello")

@@ -51,7 +51,7 @@ You can create structure instances in several ways:
 Reading from Buffers
 ====================
 
-Use the ``read()`` class method to parse binary data:
+Use the ``load()`` class method to parse binary data:
 
 .. code:: python
 
@@ -65,7 +65,18 @@ Use the ``read()`` class method to parse binary data:
 
    binary_data = b"\xd2\x04Hello\x00\xcd\xab"
    buffer = BytesIO(binary_data)
-   packet = NetworkPacket.read(buffer)
+   packet = NetworkPacket.load(buffer)
+
+   print(packet.header)    # 1234
+   print(packet.message)   # "Hello"
+   print(packet.checksum)  # 0xABCD
+
+If you don't have (or want) a file-like object, you can also use ``loads()`` to read from a sequence
+of ``bytes`` instead.
+
+.. code:: python
+
+   packet = NetworkPacket.loads(binary_data)
 
    print(packet.header)    # 1234
    print(packet.message)   # "Hello"
@@ -74,25 +85,25 @@ Use the ``read()`` class method to parse binary data:
 Writing to Buffers
 ==================
 
-Use the ``write()`` method to serialize data back to binary format:
+Use the ``dump()`` method to serialize data back to binary format:
 
 .. code:: python
-
-   import steel
-   from io import BytesIO
-
-   class NetworkPacket(steel.Structure):
-       header = steel.Integer(size=2)
-       message = steel.NullTerminatedString(encoding="ascii")
-       checksum = steel.Integer(size=2)
 
    packet = NetworkPacket(header=1234, message="Hello", checksum=0xABCD)
 
    output = BytesIO()
-   bytes_written = packet.write(output)
+   bytes_written = packet.dump(output)
 
    binary_data = output.getvalue()
    print(f"Wrote {bytes_written} bytes")
+
+If you don't have (or want) a file-like object, you can also use ``dumps()`` to return a sequence of
+``bytes`` instead.
+
+.. code:: python
+
+   binary_data = packet.dumps()
+   print(f"Wrote {len(binary_data)} bytes")
 
 ************************
  Field Order and Layout
@@ -248,7 +259,7 @@ Validation is also useful after reading binary data to verify the data integrity
    buffer = BytesIO(binary_data)
 
    try:
-       packet = NetworkPacket.read(buffer)
+       packet = NetworkPacket.load(buffer)
        packet.validate()  # Verify the parsed data is valid
        print("Data successfully validated")
    except steel.ValidationError as e:
@@ -258,19 +269,19 @@ Validation is also useful after reading binary data to verify the data integrity
 
    This approach only works if all the fields can at least read the data into the structure. If any
    field fails to even get that far (such as invalid text for a specified encoding), field-specific
-   exceptions can be raised during `.read()`, so you should prepare for that as well.
+   exceptions can be raised during `load()`, so you should prepare for that as well.
 
 Best Practices
 ==============
 
-#. **Validate before writing**: Call validate() before writing to ensure complete, valid data.
+#. **Validate before writing**: Call ``validate()`` before writing to ensure complete, valid data.
 #. **Handle missing fields**: Use try/except blocks to gracefully handle incomplete structures.
 #. **Validate incrementally**: For complex structures, consider validating fields as you set them
    rather than waiting until the end.
 #. **Validate after reading**: Always validate structures after reading from external sources to
    catch data corruption early.
 #. **Prepare for exceptions during reading**: Don't assume that every file can be read well enough
-   to be able to call `.validate()` on the result.
+   to be able to call ``validate()`` on the result.
 
 .. code:: python
 
@@ -283,9 +294,9 @@ Best Practices
 
    # Good practice: validate after reading unknown data
    def parse_file(filepath):
-       with open(filepath, 'rb') as f:
+       with open(filepath, "rb") as f:
            try:
-               packet = NetworkPacket.read(f)
+               packet = NetworkPacket.load(f)
                packet.validate()
                return packet
            except steel.ValidationError:

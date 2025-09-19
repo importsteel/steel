@@ -1,4 +1,4 @@
-from io import BufferedIOBase
+from io import BufferedIOBase, BytesIO
 from typing import Any, ClassVar, TypeVar
 
 from .types import AnyField, FieldType, ValidationError
@@ -59,17 +59,27 @@ class Structure:
             field.validate(value)
 
     @classmethod
-    def read(cls: type[T], buffer: BufferedIOBase) -> T:
+    def load(cls: type[T], buffer: BufferedIOBase) -> T:
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         data = {}
         for field in cls._config.fields.values():
             data[field.name], size = field.read(buffer)
         return cls(**data)
 
-    def write(self, buffer: BufferedIOBase) -> int:
+    @classmethod
+    def loads(cls: type[T], value: bytes) -> T:
+        return cls.load(BytesIO(value))
+
+    def dump(self, buffer: BufferedIOBase) -> int:
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         size = 0
         for field in self.__class__._config.fields.values():
             value = getattr(self, field.name)
             size += field.write(value, buffer)
         return size
+
+    def dumps(self) -> bytes:
+        # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
+        output = BytesIO()
+        self.dump(output)
+        return output.getvalue()

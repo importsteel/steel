@@ -159,31 +159,48 @@ class TestAssigningValues(unittest.TestCase):
         instance = Example(integer=1)  # Missing string
         self.assertEqual(instance.integer, 1)
         with self.assertRaises(AttributeError):
-            instance.write(output)
+            instance.dump(output)
 
 
-class TestBufferIO(unittest.TestCase):
-    def test_reading(self):
+class TestIO(unittest.TestCase):
+    def setUp(self):
         class Example(steel.Structure):
             integer = steel.Integer(size=1)
             string = steel.TerminatedString()
 
-        input = b"\x01one\x00"
-        instance = Example.read(BytesIO(input))
+        self.Example = Example
+        self.bytes = b"\x01one\x00"
+        self.dict = {
+            "integer": 1,
+            "string": "one",
+        }
+
+    def test_loading_from_buffer(self):
+        instance = self.Example.load(BytesIO(self.bytes))
 
         self.assertEqual(instance.integer, 1)
         self.assertEqual(instance.string, "one")
 
-    def test_writing(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+    def test_loading_from_bytes(self):
+        instance = self.Example.loads(self.bytes)
 
-        instance = Example(integer=1, string="one")
+        self.assertEqual(instance.integer, 1)
+        self.assertEqual(instance.string, "one")
+
+    def test_dumping_to_buffer(self):
+        instance = self.Example(**self.dict)
         output = BytesIO()
-        size = instance.write(output)
+        size = instance.dump(output)
 
-        self.assertEqual(output.getvalue(), b"\x01one\x00")
+        self.assertEqual(output.getvalue(), self.bytes)
+        self.assertEqual(size, 5)
+
+    def test_dumping(self):
+        instance = self.Example(**self.dict)
+        output = BytesIO()
+        size = instance.dump(output)
+
+        self.assertEqual(output.getvalue(), self.bytes)
         self.assertEqual(size, 5)
 
 
@@ -286,7 +303,7 @@ class TestStructureValidation(unittest.TestCase):
         buffer_data = b"TEST\x00\x64myfile\x00\x00\x00\x00\x00\x00\x01\x02\x03"
         buffer = BytesIO(buffer_data)
 
-        instance = self.ComplexStructure.read(buffer)
+        instance = self.ComplexStructure.load(buffer)
         # Should not raise any exception
         instance.validate()
 

@@ -72,8 +72,8 @@ Read Data
 
 .. code:: python
 
-   with open('logo.gif', 'rb') as f:
-      image = GIF.read(f)
+   with open("logo.gif", "rb") as f:
+      image = GIF.load(f)
 
    print(f"Version: {image.version}")
    print(f"Size: {image.width}x{image.height}")

@@ -5,7 +5,7 @@ from steel.fields.numbers import Integer
 from steel.fields.text import (
     EncodedString,
     FixedLengthString,
-    LenghIndexedString,
+    LengthIndexedString,
     TerminatedString,
 )
 from steel.types import ConfigurationError, ValidationError
@@ -119,10 +119,10 @@ class TestFixedLengthString(unittest.TestCase):
         self.assertEqual(field.get_default(), "test")
 
 
-class TestLenghIndexedString(unittest.TestCase):
+class TestLengthIndexedString(unittest.TestCase):
     def test_reading(self):
         size_field = Integer(size=1)
-        field = LenghIndexedString(size=size_field, encoding="ascii")
+        field = LengthIndexedString(size=size_field, encoding="ascii")
 
         buffer = BytesIO(b"\x05hello")
         value, size = field.read(buffer)
@@ -131,7 +131,7 @@ class TestLenghIndexedString(unittest.TestCase):
 
     def test_reading_ignores_extra_data(self):
         size_field = Integer(size=1)
-        field = LenghIndexedString(size=size_field, encoding="ascii")
+        field = LengthIndexedString(size=size_field, encoding="ascii")
 
         buffer = BytesIO(b"\x05hello:more_data")
         value, size = field.read(buffer)
@@ -140,7 +140,7 @@ class TestLenghIndexedString(unittest.TestCase):
 
     def test_reading_empty_string(self):
         size_field = Integer(size=1)
-        field = LenghIndexedString(size=size_field, encoding="ascii")
+        field = LengthIndexedString(size=size_field, encoding="ascii")
 
         buffer = BytesIO(b"\x00")
         value, bytes_read = field.read(buffer)
@@ -149,7 +149,7 @@ class TestLenghIndexedString(unittest.TestCase):
 
     def test_writing(self):
         size_field = Integer(size=1)
-        field = LenghIndexedString(size=size_field, encoding="ascii")
+        field = LengthIndexedString(size=size_field, encoding="ascii")
 
         buffer = BytesIO()
         bytes_written = field.write("hello", buffer)
@@ -160,7 +160,7 @@ class TestLenghIndexedString(unittest.TestCase):
         self.assertEqual(data, b"\x05hello")
 
     def test_get_size(self):
-        field = LenghIndexedString(size=Integer(size=2), encoding="ascii")
+        field = LengthIndexedString(size=Integer(size=2), encoding="ascii")
 
         size, cache = field.get_size(BytesIO(b"\x05\x00hello"))
 
@@ -168,25 +168,25 @@ class TestLenghIndexedString(unittest.TestCase):
         self.assertEqual(size, 7)
 
     def test_different_size_fields(self):
-        field = LenghIndexedString(size=Integer(size=1), encoding="ascii")
+        field = LengthIndexedString(size=Integer(size=1), encoding="ascii")
         size, cache = field.get_size(BytesIO(b"\x05hello"))
         self.assertEqual(size, 6)
 
-        field = LenghIndexedString(size=Integer(size=4), encoding="ascii")
+        field = LengthIndexedString(size=Integer(size=4), encoding="ascii")
         size, cache = field.get_size(BytesIO(b"\x05\x00\x00\x00hello"))
         self.assertEqual(size, 9)
 
     def test_default_value_none(self):
-        field = LenghIndexedString(size=Integer(size=1))
+        field = LengthIndexedString(size=Integer(size=1))
         with self.assertRaises(ConfigurationError):
             field.get_default()
 
     def test_default_value_provided(self):
-        field = LenghIndexedString(size=Integer(size=1), default="hello")
+        field = LengthIndexedString(size=Integer(size=1), default="hello")
         self.assertEqual(field.get_default(), "hello")
 
     def test_default_value_empty_string(self):
-        field = LenghIndexedString(size=Integer(size=1), default="")
+        field = LengthIndexedString(size=Integer(size=1), default="")
         self.assertEqual(field.get_default(), "")
 
 

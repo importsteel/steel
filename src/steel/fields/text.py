@@ -74,11 +74,11 @@ class FixedLengthString(EncodedString):
         return self.unpack(encoded), len(encoded)
 
 
-class LenghIndexedStringParams(EncodedStringParams):
+class LengthIndexedStringParams(EncodedStringParams):
     size_field: NotRequired[Field[int]]
 
 
-class LenghIndexedString(EncodedString):
+class LengthIndexedString(EncodedString):
     # The byte-length of this string is stored in the data buffer itself,
     # so the size attribute defers to another configured Field type that can
     # return an int type.
@@ -167,4 +167,4 @@ class TerminatedString(EncodedString):
 
 # Some aliases for convenience
 CString = TerminatedString
-PascalString = LenghIndexedString
+PascalString = LengthIndexedString

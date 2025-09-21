@@ -13,7 +13,7 @@ from .fields.numbers import Float as Float
 from .fields.numbers import Integer as Integer
 from .fields.text import CString as CString
 from .fields.text import FixedLengthString as FixedLengthString
-from .fields.text import LenghIndexedString as LenghIndexedString
+from .fields.text import LengthIndexedString as LengthIndexedString
 from .fields.text import PascalString as PascalString
 from .fields.text import TerminatedString as TerminatedString
 from .types import ConfigurationError as ConfigurationError

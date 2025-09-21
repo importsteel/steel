@@ -12,6 +12,6 @@ from .numbers import Float as Float
 from .numbers import Integer as Integer
 from .text import CString as CString
 from .text import FixedLengthString as FixedLengthString
-from .text import LenghIndexedString as LenghIndexedString
+from .text import LengthIndexedString as LengthIndexedString
 from .text import PascalString as PascalString
 from .text import TerminatedString as TerminatedString

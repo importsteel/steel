@@ -56,9 +56,9 @@ Additional Parameters
 
    FixedLengthString(size=20, encoding="ascii")
 
-********************
- LenghIndexedString
-********************
+*********************
+ LengthIndexedString
+*********************
 
 Strings where the length is stored as a separate field before the string data itself. This is
 commonly known as a Pascal string format, where a length prefix indicates how many bytes follow for
@@ -75,11 +75,11 @@ Additional Parameters
 
    from steel import Integer
 
-   LenghIndexedString(size=Integer(size=2), encoding="utf-8")
+   LengthIndexedString(size=Integer(size=2), encoding="utf-8")
 
 .. tip::
 
-   ``PascalString`` is provided an alias for ``LenghIndexedString``, for authors more familiar with
+   ``PascalString`` is provided an alias for ``LengthIndexedString``, for authors more familiar with
    that name.
 
 ******************

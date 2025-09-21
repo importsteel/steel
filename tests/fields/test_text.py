@@ -82,28 +82,9 @@ class TestFixedLengthString(unittest.TestCase):
         data = buffer.read()
         self.assertEqual(data, b"hello")
 
-    def test_get_size(self):
+    def test_size(self):
         field = FixedLengthString(size=20, encoding="ascii")
-
-        size, cache = field.get_size(BytesIO(b"hello"))
-
-        self.assertEqual(size, 20)
-
-    def test_different_size_values(self):
-        field = FixedLengthString(size=20, encoding="ascii")
-
-        # Always the specified size, no matter the length of the string
-        size, cache = field.get_size(BytesIO(b"hello"))
-        self.assertEqual(size, 20)
-        self.assertIsNone(cache)
-
-        size, cache = field.get_size(BytesIO(b"hello world"))
-        self.assertEqual(size, 20)
-        self.assertIsNone(cache)
-
-        size, cache = field.get_size(BytesIO(b"hello to the big blue world"))
-        self.assertEqual(size, 20)
-        self.assertIsNone(cache)
+        self.assertEqual(field.size, 20)
 
     def test_default_value_none(self):
         field = FixedLengthString(size=10)

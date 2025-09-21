@@ -1,6 +1,5 @@
 import unittest
 from enum import Flag, IntEnum, StrEnum, auto
-from io import BytesIO
 
 from steel.fields.enum import Flags, IntegerEnum, StringEnum
 from steel.fields.text import FixedLengthString
@@ -68,12 +67,9 @@ class TestIntegerEnum(unittest.TestCase):
         self.assertEqual(self.field.unwrap(ByteOrder.BIG_ENDIAN), 1)
         self.assertEqual(self.field.unwrap(ByteOrder.LITTLE_ENDIAN), 2)
 
-    def test_get_size(self):
-        # Test that Flags delegates get_size to wrapped Integer field
-        size, cache = self.field.get_size(BytesIO())
-
+    def test_size(self):
         # IntegerEnum uses Integer(size=1) by default
-        self.assertEqual(size, 1)
+        self.assertEqual(self.field.size, 1)
 
     def test_default_value_missing(self):
         field = IntegerEnum(ByteOrder)
@@ -142,11 +138,9 @@ class TestStringEnum(unittest.TestCase):
         with self.assertRaises(TypeError):
             MissingField()
 
-    def test_get_size(self):
-        # Test that Flags delegates get_size to wrapped Integer field
-        size, cache = self.field.get_size(BytesIO())
-
-        self.assertEqual(size, 3)
+    def test_size(self):
+        # Test that StringEnum delegates get_size to wrapped Integer field
+        self.assertEqual(self.field.size, 3)
 
     def test_default_value_missing(self):
         class StatusField(StringEnum):
@@ -223,12 +217,9 @@ class TestFlags(unittest.TestCase):
         combined = Permission.READ | Permission.WRITE | Permission.EXECUTE
         self.assertEqual(self.field.unwrap(combined), 7)
 
-    def test_get_size(self):
-        # Test that Flags delegates get_size to wrapped Integer field
-        size, cache = self.field.get_size(BytesIO())
-
+    def test_size(self):
         # Flags uses Integer(size=1) by default
-        self.assertEqual(size, 1)
+        self.assertEqual(self.field.size, 1)
 
     def test_default_value_missing(self):
         field = Flags(Permission)

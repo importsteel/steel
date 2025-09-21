@@ -94,13 +94,12 @@ class ConversionBehavior(unittest.TestCase):
         data = buffer.read()
         self.assertEqual(data, b"\x05\x00")
 
-    def test_get_size(self):
-        # Test that WrappedField delegates get_size to wrapped field
+    def test_size(self):
+        # Test that WrappedField delegates size to its wrapped field
         field = IntegerString()
-        size, cache = field.get_size(BytesIO())
 
         # Integer field has size=2
-        self.assertEqual(size, 2)
+        self.assertEqual(field.size, 2)
 
 
 class TestDefaultValues(unittest.TestCase):

@@ -13,8 +13,8 @@ from typing import (
     overload,
 )
 
-from ..base import Structure
-from ..types import ConfigurationError, FieldType, SentinelValue
+from ..base import State, Structure
+from ..types import ConfigurationError, FieldType, SentinelValue, SizeLookup
 
 # This type can be used to identify field options that can be overriden
 # at the class level.
@@ -29,6 +29,7 @@ class BaseParams[T](TypedDict):
 
 class Field[T, D = None](FieldType[T, D]):
     default: T | SentinelValue = NoDefault
+    size: int | SizeLookup
 
     @classmethod
     def __init_subclass__(cls: type["Field[T, D]"]) -> None:
@@ -64,8 +65,7 @@ class Field[T, D = None](FieldType[T, D]):
         for base in cls.__bases__:
             yield from Field.get_all_annotations(base, indent=indent + 1)
 
-    @abstractmethod
-    def get_size(self, buffer: BufferedIOBase) -> tuple[int, Any]:
+    def get_offset(self, buffer: BufferedIOBase, state: State) -> int:
         raise NotImplementedError()
 
     @overload
@@ -138,9 +138,6 @@ class ExplicitlySizedField[T](Field[T]):
         super().__init__(**kwargs)
         self.size = size
 
-    def get_size(self, buffer: BufferedIOBase) -> tuple[int, None]:
-        return self.size, None
-
     def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
         packed = buffer.read(self.size)
         return self.unpack(packed), len(packed)
@@ -149,13 +146,14 @@ class ExplicitlySizedField[T](Field[T]):
 class WrappedField[T, D](Field[T]):
     wrapped_field: Field[D, Any]
 
+    def __init__(self, **kwargs: Unpack[BaseParams[T]]):
+        super().__init__(**kwargs)
+        self.size = self.get_wrapped_field().size
+
     def get_wrapped_field(self) -> Field[D, Any]:
         # Skip the descriptors when access this internally
         field: Field[D, Any] = self.__class__.__dict__["wrapped_field"]
         return field
-
-    def get_size(self, buffer: BufferedIOBase) -> tuple[int, Any]:
-        return self.get_wrapped_field().get_size(buffer)
 
     @abstractmethod
     def validate(self, value: T) -> None:

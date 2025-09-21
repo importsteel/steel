@@ -134,10 +134,9 @@ class TestTimestamp(unittest.TestCase):
     def test_get_size(self):
         # Test that Timestamp delegates get_size to wrapped Integer field
         field = Timestamp(timezone=ZoneInfo("UTC"))
-        size, cache = field.get_size(BytesIO())
 
         # Timestamp uses Integer(size=4)
-        self.assertEqual(size, 4)
+        self.assertEqual(field.size, 4)
 
     def test_default_value_missing(self):
         field = Timestamp()
@@ -235,13 +234,12 @@ class TestDuration(unittest.TestCase):
                     places=5,
                 )
 
-    def test_get_size(self):
+    def test_size(self):
         # Test that Duration delegates get_size to wrapped Float field
         field = Duration()
-        size, cache = field.get_size(BytesIO())
 
         # Duration uses Float(size=4)
-        self.assertEqual(size, 4)
+        self.assertEqual(field.size, 4)
 
     def test_default_value_missing(self):
         field = Duration()

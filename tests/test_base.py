@@ -1,20 +1,22 @@
 import unittest
 from io import BytesIO
 
-import steel
-from steel.base import Configuration
+from steel.base import Configuration, Structure
+from steel.fields.bytes import Bytes, FixedBytes
+from steel.fields.numbers import Integer
+from steel.fields.text import FixedLengthString, LengthIndexedString, TerminatedString
 from steel.types import ValidationError
 
 
 class TestStructureConfiguration(unittest.TestCase):
     def test_configuration_exists(self):
-        class Example(steel.Structure):
+        class Example(Structure):
             pass
 
         self.assertIsInstance(Example._config, Configuration)
 
     def test_configuration_stores_options(self):
-        class Example(steel.Structure, encoding="utf8", endianness="<", unknown=True):
+        class Example(Structure, encoding="utf8", endianness="<", unknown=True):
             pass
 
         self.assertEqual(
@@ -27,28 +29,28 @@ class TestStructureConfiguration(unittest.TestCase):
         )
 
     def test_configuration_stores_fields(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         # Something got stored
         self.assertIn("integer", Example._config.fields)
         self.assertIn("string", Example._config.fields)
 
         # The right fields got stored
-        self.assertIsInstance(Example._config.fields["integer"], steel.Integer)
-        self.assertIsInstance(Example._config.fields["string"], steel.TerminatedString)
+        self.assertIsInstance(Example._config.fields["integer"], Integer)
+        self.assertIsInstance(Example._config.fields["string"], TerminatedString)
 
         # They're also accessible as keys on the config itself
-        self.assertIsInstance(Example._config["integer"], steel.Integer)
-        self.assertIsInstance(Example._config["string"], steel.TerminatedString)
+        self.assertIsInstance(Example._config["integer"], Integer)
+        self.assertIsInstance(Example._config["string"], TerminatedString)
 
 
 class TestOverridingOptions(unittest.TestCase):
     def test_options_specified_in_fields(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1, endianness="<")
-            string = steel.TerminatedString(terminator=b"\x00", encoding="utf8")
+        class Example(Structure):
+            integer = Integer(size=1, endianness="<")
+            string = TerminatedString(terminator=b"\x00", encoding="utf8")
 
         self.assertEqual(Example.integer.endianness, "<")
         self.assertEqual(
@@ -71,9 +73,9 @@ class TestOverridingOptions(unittest.TestCase):
         self.assertEqual(Example.string.terminator, b"\x00")
 
     def test_options_specified_in_structure(self):
-        class Example(steel.Structure, endianness="<", encoding="utf8"):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure, endianness="<", encoding="utf8"):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         self.assertEqual(Example.integer.specified_options, {"size": 1})
         self.assertEqual(Example.integer.endianness, "<")
@@ -83,9 +85,9 @@ class TestOverridingOptions(unittest.TestCase):
         self.assertEqual(Example.string.terminator, b"\x00")
 
     def test_field_options_override_class_options(self):
-        class Example(steel.Structure, endianness="<", encoding="utf8"):
-            integer = steel.Integer(size=1, endianness=">")
-            string = steel.TerminatedString(terminator=b"\xff", encoding="ascii")
+        class Example(Structure, endianness="<", encoding="utf8"):
+            integer = Integer(size=1, endianness=">")
+            string = TerminatedString(terminator=b"\xff", encoding="ascii")
 
         self.assertEqual(
             Example.integer.specified_options,
@@ -107,11 +109,11 @@ class TestOverridingOptions(unittest.TestCase):
         self.assertEqual(Example.string.terminator, b"\xff")
 
     def test_partial_overrides(self):
-        class Example(steel.Structure, padding=b"\xff"):
-            utf8 = steel.FixedLengthString(size=1)
-            ascii = steel.FixedLengthString(size=1, encoding="ascii")
-            padding_00 = steel.FixedLengthString(size=1, padding=b"\x00")
-            padding_ff = steel.FixedLengthString(size=1)
+        class Example(Structure, padding=b"\xff"):
+            utf8 = FixedLengthString(size=1)
+            ascii = FixedLengthString(size=1, encoding="ascii")
+            padding_00 = FixedLengthString(size=1, padding=b"\x00")
+            padding_ff = FixedLengthString(size=1)
 
         self.assertEqual(Example.utf8.encoding, "utf8")
         self.assertEqual(Example.ascii.encoding, "ascii")
@@ -121,18 +123,18 @@ class TestOverridingOptions(unittest.TestCase):
 
 class TestAssigningValues(unittest.TestCase):
     def test_instantiation(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         instance = Example(integer=1, string="one")
         self.assertEqual(instance.integer, 1)
         self.assertEqual(instance.string, "one")
 
     def test_post_instantiation(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         instance = Example()
         instance.integer = 1
@@ -141,9 +143,9 @@ class TestAssigningValues(unittest.TestCase):
         self.assertEqual(instance.string, "one")
 
     def test_missing_attribute(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         instance = Example(integer=1)  # Missing string
         self.assertEqual(instance.integer, 1)
@@ -151,9 +153,9 @@ class TestAssigningValues(unittest.TestCase):
             instance.string
 
     def test_writing_with_missing_attribute(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         output = BytesIO()
         instance = Example(integer=1)  # Missing string
@@ -164,9 +166,9 @@ class TestAssigningValues(unittest.TestCase):
 
 class TestIO(unittest.TestCase):
     def setUp(self):
-        class Example(steel.Structure):
-            integer = steel.Integer(size=1)
-            string = steel.TerminatedString()
+        class Example(Structure):
+            integer = Integer(size=1)
+            string = TerminatedString()
 
         self.Example = Example
         self.bytes = b"\x01one\x00"
@@ -209,15 +211,15 @@ class TestStructureValidation(unittest.TestCase):
     def setUp(self):
         """Set up test structures for validation testing."""
 
-        class SimpleStructure(steel.Structure):
-            number = steel.Integer(size=1, signed=False)
-            text = steel.TerminatedString(encoding="ascii")
+        class SimpleStructure(Structure):
+            number = Integer(size=1, signed=False)
+            text = TerminatedString(encoding="ascii")
 
-        class ComplexStructure(steel.Structure):
-            magic = steel.FixedBytes(b"TEST")
-            count = steel.Integer(size=2, signed=False)
-            name = steel.FixedLengthString(size=10, encoding="ascii")
-            data = steel.Bytes(size=4)
+        class ComplexStructure(Structure):
+            magic = FixedBytes(b"TEST")
+            count = Integer(size=2, signed=False)
+            name = FixedLengthString(size=10, encoding="ascii")
+            data = Bytes(size=4)
 
         self.SimpleStructure = SimpleStructure
         self.ComplexStructure = ComplexStructure
@@ -309,9 +311,9 @@ class TestStructureValidation(unittest.TestCase):
     def test_validate_structure_with_global_options(self):
         """Test validation works with structure-level field options."""
 
-        class StructureWithOptions(steel.Structure, endianness=">", encoding="utf-8"):
-            number = steel.Integer(size=2)  # Will use big-endian
-            text = steel.TerminatedString()  # Will use UTF-8
+        class StructureWithOptions(Structure, endianness=">", encoding="utf-8"):
+            number = Integer(size=2)  # Will use big-endian
+            text = TerminatedString()  # Will use UTF-8
 
         instance = StructureWithOptions(number=1000, text="hello")
         # Should not raise any exception
@@ -320,9 +322,9 @@ class TestStructureValidation(unittest.TestCase):
     def test_validate_structure_with_mixed_field_overrides(self):
         """Test validation with mix of structure options and field overrides."""
 
-        class MixedStructure(steel.Structure, endianness=">"):
-            big_endian_num = steel.Integer(size=2)  # Uses structure endianness
-            little_endian_num = steel.Integer(size=2, endianness="<")  # Overrides endianness
+        class MixedStructure(Structure, endianness=">"):
+            big_endian_num = Integer(size=2)  # Uses structure endianness
+            little_endian_num = Integer(size=2, endianness="<")  # Overrides endianness
 
         instance = MixedStructure(big_endian_num=1000, little_endian_num=2000)
         # Should not raise any exception
@@ -343,9 +345,70 @@ class TestStructureValidation(unittest.TestCase):
     def test_validate_empty_structure(self):
         """Test validation of structure with no fields."""
 
-        class EmptyStructure(steel.Structure):
+        class EmptyStructure(Structure):
             pass
 
         instance = EmptyStructure()
         # Should not raise any exception
         instance.validate()
+
+
+class TestOffsetCalculations(unittest.TestCase):
+    def test_explicit_offsets(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = Integer(size=2)
+            c = Integer(size=4)
+            d = Integer(size=8)
+
+        self.assertEqual(Example._config.offsets["a"], [0])
+        self.assertEqual(Example._config.offsets["b"], [1])
+        self.assertEqual(Example._config.offsets["c"], [3])
+        self.assertEqual(Example._config.offsets["d"], [7])
+
+    def test_variable_offsets(self):
+        class Example(Structure):
+            a = TerminatedString()
+            b = Integer(size=1)
+
+        self.assertEqual(Example._config.offsets["a"], [0])
+        self.assertEqual(Example._config.offsets["b"], [Example.a.get_size])
+
+    def test_mixed_offsets(self):
+        class Example(Structure):
+            a = Integer(size=2)
+            b = LengthIndexedString(size=Integer(size=1))
+            c = Integer(size=4)
+            d = Integer(size=2)
+            e = TerminatedString()
+            f = Integer(size=2)
+            g = Integer(size=4)
+
+        self.assertEqual(
+            Example._config.offsets["a"],
+            [0],
+        )
+        self.assertEqual(
+            Example._config.offsets["b"],
+            [2],
+        )
+        self.assertEqual(
+            Example._config.offsets["c"],
+            [2, Example.b.get_size],
+        )
+        self.assertEqual(
+            Example._config.offsets["d"],
+            [2, Example.b.get_size, 4],
+        )
+        self.assertEqual(
+            Example._config.offsets["e"],
+            [2, Example.b.get_size, 6],
+        )
+        self.assertEqual(
+            Example._config.offsets["f"],
+            [2, Example.b.get_size, 6, Example.e.get_size],
+        )
+        self.assertEqual(
+            Example._config.offsets["g"],
+            [2, Example.b.get_size, 6, Example.e.get_size, 2],
+        )

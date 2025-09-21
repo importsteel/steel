@@ -1,11 +1,17 @@
 from io import BufferedIOBase
-from typing import Any, ClassVar
+from typing import Any, Callable, ClassVar
+
+type SizeLookup = Callable[[BufferedIOBase], tuple[int, Any]]
 
 
 class FieldType[T, D]:
     name: str
     all_options: ClassVar[dict[str, Any]]
     specified_options: dict[str, Any]
+    size: int | SizeLookup
+
+    def get_size(self, buffer: BufferedIOBase) -> tuple[int, Any]:
+        raise NotImplementedError()
 
     def validate(self, value: Any) -> None:
         pass

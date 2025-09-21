@@ -58,9 +58,6 @@ class FixedLengthString(EncodedString):
         self.size = size
         self.padding = padding
 
-    def get_size(self, buffer: BufferedIOBase) -> tuple[int, None]:
-        return self.size, None
-
     def validate(self, value: str) -> None:
         packed_value = super().pack(value)
         if len(packed_value) > self.size:
@@ -92,6 +89,7 @@ class LengthIndexedString(EncodedString):
     ):
         super().__init__(**kwargs)
         self.size_field = size
+        self.size = self.get_size
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, int]:
         # Packing the text value will automatically account for the
@@ -142,6 +140,7 @@ class TerminatedString(EncodedString):
                 f"String terminator may only contain one byte; got {len(terminator)}"
             )
         self.terminator = terminator
+        self.size = self.get_size
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, str]:
         value, size = self.read(buffer)

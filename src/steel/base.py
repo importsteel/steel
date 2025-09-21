@@ -1,7 +1,7 @@
-from io import BufferedIOBase, BytesIO
+from io import BufferedIOBase, BufferedReader, BytesIO
 from typing import Any, ClassVar, TypeVar
 
-from .types import AnyField, FieldType, ValidationError
+from .types import AnyField, FieldType, SizeLookup, ValidationError
 
 T = TypeVar("T", bound="Structure")
 
@@ -12,10 +12,12 @@ class FieldDict(dict[str, AnyField]): ...
 class Configuration:
     fields: FieldDict
     options: dict[str, Any]
+    offsets: dict[str, list[int | SizeLookup]]
 
     def __init__(self, options: dict[str, Any]) -> None:
         self.fields = FieldDict()
         self.options = options
+        self.offsets = {}
 
     def add_field(self, field: AnyField) -> None:
         self.fields[field.name] = field
@@ -23,9 +25,48 @@ class Configuration:
     def __getitem__(self, name: str) -> AnyField:
         return self.fields[name]
 
+    def create_offset_chains(self) -> None:
+        current_offset = 0
+        structure_chain: list[int | SizeLookup] = []
+
+        for name, field in self.fields.items():
+            self.offsets[name] = field_offset = structure_chain.copy()
+
+            if not structure_chain or current_offset > 0:
+                field_offset.append(current_offset)
+
+            if callable(field.size):
+                if current_offset > 0:
+                    structure_chain.append(current_offset)
+                structure_chain.append(field.size)
+                current_offset = 0
+            else:
+                current_offset += field.size
+
+
+class FieldState:
+    __slots__ = ["field", "offset_chain", "size", "cache"]
+
+    field: AnyField
+    offset: int | None
+    size: int | None
+    cache: Any
+
+    def __init__(self, field: AnyField, /) -> None:
+        self.field = field
+
+
+class State(dict[str, FieldState]):
+    buffer: BufferedReader | None
+
+    def __init__(self, buffer: BufferedReader | None, config: Configuration) -> None:
+        self.buffer = buffer
+        self.config = config
+
 
 class Structure:
     _config: ClassVar[Configuration]
+    _state: State
 
     def __init_subclass__(cls, **options: Any) -> None:
         super().__init_subclass__()
@@ -46,7 +87,11 @@ class Structure:
             for key in overrides:
                 setattr(field, key, options[key])
 
-    def __init__(self, **kwargs: Any) -> None:
+        cls._config.create_offset_chains()
+
+    def __init__(self, buffer: BufferedReader | None = None, /, **kwargs: Any) -> None:
+        self._state = State(buffer, self.__class__._config)
+
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         for key, value in kwargs.items():
             setattr(self, key, value)

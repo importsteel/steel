@@ -189,11 +189,10 @@ class TestIO(unittest.TestCase):
 
     def test_dumping_to_buffer(self):
         instance = self.Example(**self.dict)
-        output = BytesIO()
-        size = instance.dump(output)
+        output = instance.dumps()
 
-        self.assertEqual(output.getvalue(), self.bytes)
-        self.assertEqual(size, 5)
+        self.assertEqual(output, self.bytes)
+        self.assertEqual(len(output), 5)
 
     def test_dumping(self):
         instance = self.Example(**self.dict)

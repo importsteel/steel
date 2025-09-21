@@ -78,9 +78,6 @@ class Field[T, D = None](FieldType[T, D]):
     def __get__(self, obj: Any, owner: type) -> Self: ...
 
     def __get__(self, obj: Optional[Any], owner: Any) -> Self | T:
-        if obj is None:
-            return self
-
         if not isinstance(obj, Structure):
             return self
 

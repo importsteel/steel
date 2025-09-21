@@ -60,7 +60,6 @@ class Structure:
 
     @classmethod
     def load(cls: type[T], buffer: BufferedIOBase) -> T:
-        # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         data = {}
         for field in cls._config.fields.values():
             data[field.name], size = field.read(buffer)
@@ -71,7 +70,6 @@ class Structure:
         return cls.load(BytesIO(value))
 
     def dump(self, buffer: BufferedIOBase) -> int:
-        # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         size = 0
         for field in self.__class__._config.fields.values():
             value = getattr(self, field.name)
@@ -79,7 +77,6 @@ class Structure:
         return size
 
     def dumps(self) -> bytes:
-        # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         output = BytesIO()
         self.dump(output)
         return output.getvalue()

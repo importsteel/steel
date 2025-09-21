@@ -1,4 +1,4 @@
-from io import BufferedIOBase, BufferedReader, BytesIO
+from io import BufferedIOBase, BytesIO
 from typing import Any, ClassVar, TypeVar
 
 from .types import AnyField, FieldType, SizeLookup, ValidationError
@@ -43,6 +43,9 @@ class Configuration:
             else:
                 current_offset += field.size
 
+    def create_state(self, buffer: BufferedIOBase) -> "State":
+        return State(buffer, self)
+
 
 class FieldState:
     __slots__ = ["field", "offset_chain", "size", "cache"]
@@ -57,11 +60,25 @@ class FieldState:
 
 
 class State(dict[str, FieldState]):
-    buffer: BufferedReader | None
+    buffer: BufferedIOBase
+    config: Configuration
 
-    def __init__(self, buffer: BufferedReader | None, config: Configuration) -> None:
+    def __init__(self, buffer: BufferedIOBase, config: Configuration) -> None:
         self.buffer = buffer
         self.config = config
+
+    def get_offset(self, field_name: str) -> int:
+        print(self.config.offsets[field_name])
+        offset = 0
+        for step in self.config.offsets[field_name]:
+            self.buffer.seek(offset)
+            if callable(step):
+                size, cache = step(self.buffer)
+                print(size, cache)
+                offset += size
+            else:
+                offset += step
+        return offset
 
 
 class Structure:
@@ -89,8 +106,9 @@ class Structure:
 
         cls._config.create_offset_chains()
 
-    def __init__(self, buffer: BufferedReader | None = None, /, **kwargs: Any) -> None:
-        self._state = State(buffer, self.__class__._config)
+    def __init__(self, buffer: BufferedIOBase | None = None, /, **kwargs: Any) -> None:
+        if buffer:
+            self._state = self._config.create_state(buffer)
 
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         for key, value in kwargs.items():

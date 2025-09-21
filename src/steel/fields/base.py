@@ -13,7 +13,7 @@ from typing import (
     overload,
 )
 
-from ..base import State, Structure
+from ..base import Structure
 from ..types import ConfigurationError, FieldType, SentinelValue, SizeLookup
 
 # This type can be used to identify field options that can be overriden
@@ -64,9 +64,6 @@ class Field[T, D = None](FieldType[T, D]):
             yield indent, name, annotation
         for base in cls.__bases__:
             yield from Field.get_all_annotations(base, indent=indent + 1)
-
-    def get_offset(self, buffer: BufferedIOBase, state: State) -> int:
-        raise NotImplementedError()
 
     @overload
     def __get__(self, obj: None, owner: type) -> Self: ...

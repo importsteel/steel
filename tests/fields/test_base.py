@@ -101,3 +101,30 @@ class ConversionBehavior(unittest.TestCase):
 
         # Integer field has size=2
         self.assertEqual(size, 2)
+
+
+class TestDefaultValues(unittest.TestCase):
+    def test_base_field_default_none(self):
+        class NoDefault(Structure):
+            value = Integer(size=4)
+
+        with self.assertRaises(AttributeError):
+            instance = NoDefault()
+            instance.value  # This should trigger the AttributeError
+
+    def test_base_field_default_provided(self):
+        class HasDefault(Structure):
+            value = Integer(size=4, default=42)
+
+        instance = HasDefault()
+        self.assertEqual(instance.value, 42)
+
+    def test_wrapped_field_default_inheritance(self):
+        # Test that WrappedField properly handles defaults
+        field = IntegerString(default="123")
+
+        class TestStruct(Structure):
+            value = field
+
+        instance = TestStruct()
+        self.assertEqual(instance.value, "123")

@@ -48,6 +48,15 @@ class TestStringEncoding(unittest.TestCase):
         with self.assertRaises(ValidationError):
             field.validate("héllo")
 
+    def test_default_value_missing(self):
+        field = EncodedString()
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = EncodedString(default="hello")
+        self.assertEqual(field.get_default(), "hello")
+
 
 class TestFixedLengthString(unittest.TestCase):
     def test_invalid_padding(self):
@@ -95,6 +104,19 @@ class TestFixedLengthString(unittest.TestCase):
         size, cache = field.get_size(BytesIO(b"hello to the big blue world"))
         self.assertEqual(size, 20)
         self.assertIsNone(cache)
+
+    def test_default_value_none(self):
+        field = FixedLengthString(size=10)
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = FixedLengthString(size=10, default="hello")
+        self.assertEqual(field.get_default(), "hello")
+
+    def test_default_value_with_padding(self):
+        field = FixedLengthString(size=10, padding=b"*", default="test")
+        self.assertEqual(field.get_default(), "test")
 
 
 class TestLenghIndexedString(unittest.TestCase):
@@ -153,6 +175,19 @@ class TestLenghIndexedString(unittest.TestCase):
         field = LenghIndexedString(size=Integer(size=4), encoding="ascii")
         size, cache = field.get_size(BytesIO(b"\x05\x00\x00\x00hello"))
         self.assertEqual(size, 9)
+
+    def test_default_value_none(self):
+        field = LenghIndexedString(size=Integer(size=1))
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = LenghIndexedString(size=Integer(size=1), default="hello")
+        self.assertEqual(field.get_default(), "hello")
+
+    def test_default_value_empty_string(self):
+        field = LenghIndexedString(size=Integer(size=1), default="")
+        self.assertEqual(field.get_default(), "")
 
 
 class TestTerminatedString(unittest.TestCase):
@@ -220,3 +255,20 @@ class TestTerminatedString(unittest.TestCase):
         # Size includes the terminator
         self.assertEqual(size, 6)
         self.assertEqual(cache, "hello")
+
+    def test_default_value_none(self):
+        field = TerminatedString()
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = TerminatedString(default="hello")
+        self.assertEqual(field.get_default(), "hello")
+
+    def test_default_value_with_custom_terminator(self):
+        field = TerminatedString(terminator=b";", default="test")
+        self.assertEqual(field.get_default(), "test")
+
+    def test_default_value_empty_string(self):
+        field = TerminatedString(default="")
+        self.assertEqual(field.get_default(), "")

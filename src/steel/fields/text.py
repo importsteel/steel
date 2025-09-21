@@ -1,13 +1,24 @@
 from io import BufferedIOBase
+from typing import NotRequired, Unpack
 
 from ..types import ConfigurationError, ValidationError
-from .base import Field, Option
+from .base import BaseParams, Field, Option
+
+
+class EncodedStringParams(BaseParams[str]):
+    encoding: NotRequired[str]
 
 
 class EncodedString(Field[str]):
     encoding: Option[str]
 
-    def __init__(self, *, encoding: str = "utf8"):
+    def __init__(
+        self,
+        *,
+        encoding: str = "utf8",
+        **kwargs: Unpack[BaseParams[str]],
+    ):
+        super().__init__(**kwargs)
         self.encoding = encoding
 
     def validate(self, value: str) -> None:
@@ -23,12 +34,23 @@ class EncodedString(Field[str]):
         return value.encode(self.encoding)
 
 
+class FixedLengthStringParams(EncodedStringParams):
+    size: int
+    padding: NotRequired[bytes]
+
+
 class FixedLengthString(EncodedString):
     size: int
     padding: Option[bytes]
 
-    def __init__(self, *, size: int, encoding: str = "utf8", padding: bytes = b"\x00"):
-        super().__init__(encoding=encoding)
+    def __init__(
+        self,
+        *,
+        size: int,
+        padding: bytes = b"\x00",
+        **kwargs: Unpack[EncodedStringParams],
+    ):
+        super().__init__(**kwargs)
         if len(padding) > 1:
             raise ConfigurationError(
                 f"String padding may only contain one byte; got {len(padding)}"
@@ -52,14 +74,23 @@ class FixedLengthString(EncodedString):
         return self.unpack(encoded), len(encoded)
 
 
+class LenghIndexedStringParams(EncodedStringParams):
+    size_field: NotRequired[Field[int]]
+
+
 class LenghIndexedString(EncodedString):
     # The byte-length of this string is stored in the data buffer itself,
     # so the size attribute defers to another configured Field type that can
     # return an int type.
     size_field: Field[int]
 
-    def __init__(self, *, size: Field[int], encoding: str = "utf8"):
-        super().__init__(encoding=encoding)
+    def __init__(
+        self,
+        *,
+        size: Field[int],
+        **kwargs: Unpack[EncodedStringParams],
+    ):
+        super().__init__(**kwargs)
         self.size_field = size
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, int]:
@@ -92,12 +123,20 @@ class LenghIndexedString(EncodedString):
         return size + encoded
 
 
+class TerminatedStringParams(EncodedStringParams):
+    terminator: NotRequired[bytes]
+
+
 class TerminatedString(EncodedString):
-    size: int
     terminator: Option[bytes]
 
-    def __init__(self, *, encoding: str = "utf8", terminator: bytes = b"\x00"):
-        super().__init__(encoding=encoding)
+    def __init__(
+        self,
+        *,
+        terminator: bytes = b"\x00",
+        **kwargs: Unpack[EncodedStringParams],
+    ):
+        super().__init__(**kwargs)
         if len(terminator) > 1:
             raise ConfigurationError(
                 f"String terminator may only contain one byte; got {len(terminator)}"

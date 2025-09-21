@@ -2,7 +2,7 @@ import math
 import unittest
 
 from steel.fields.numbers import Float, Integer
-from steel.types import ValidationError
+from steel.types import ConfigurationError, ValidationError
 
 
 class TestInteger(unittest.TestCase):
@@ -107,6 +107,29 @@ class TestInteger(unittest.TestCase):
         # so they can be overridden by class options
         self.assertIn("endianness", Integer.all_options)
 
+    def test_default_value_none(self):
+        field = Integer(size=4)
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = Integer(size=4, default=42)
+        self.assertEqual(field.get_default(), 42)
+
+    def test_default_value_signed(self):
+        field = Integer(size=4, signed=True, default=-100)
+        self.assertEqual(field.get_default(), -100)
+
+    def test_default_value_different_sizes(self):
+        field1 = Integer(size=1, default=255)
+        self.assertEqual(field1.get_default(), 255)
+
+        field2 = Integer(size=2, default=65535)
+        self.assertEqual(field2.get_default(), 65535)
+
+        field8 = Integer(size=8, default=0x123456789ABCDEF0)
+        self.assertEqual(field8.get_default(), 0x123456789ABCDEF0)
+
 
 class TestFloat(unittest.TestCase):
     def test_packing_sizes(self):
@@ -162,3 +185,32 @@ class TestFloat(unittest.TestCase):
         packed = field.pack(float("nan"))
         unpacked = field.unpack(packed)
         self.assertTrue(math.isnan(unpacked))
+
+    def test_default_value_none(self):
+        field = Float(size=4)
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = Float(size=4, default=3.14)
+        self.assertEqual(field.get_default(), 3.14)
+
+    def test_default_value_different_sizes(self):
+        field2 = Float(size=2, default=0.5)
+        self.assertEqual(field2.get_default(), 0.5)
+
+        field4 = Float(size=4, default=3.14159)
+        self.assertEqual(field4.get_default(), 3.14159)
+
+        field8 = Float(size=8, default=2.718281828459045)
+        self.assertEqual(field8.get_default(), 2.718281828459045)
+
+    def test_default_value_special_values(self):
+        field_inf = Float(size=4, default=float("inf"))
+        self.assertTrue(math.isinf(field_inf.get_default()))
+
+        field_ninf = Float(size=4, default=float("-inf"))
+        self.assertTrue(math.isinf(field_ninf.get_default()))
+
+        field_nan = Float(size=4, default=float("nan"))
+        self.assertTrue(math.isnan(field_nan.get_default()))

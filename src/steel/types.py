@@ -33,3 +33,7 @@ class ConfigurationError(RuntimeError):
 
 class ValidationError(RuntimeError):
     pass
+
+
+class SentinelValue:
+    pass

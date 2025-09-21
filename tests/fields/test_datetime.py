@@ -4,6 +4,7 @@ from io import BytesIO
 from zoneinfo import ZoneInfo
 
 from steel.fields.datetime import Duration, Timestamp
+from steel.types import ConfigurationError
 
 
 class TestTimestamp(unittest.TestCase):
@@ -138,6 +139,16 @@ class TestTimestamp(unittest.TestCase):
         # Timestamp uses Integer(size=4)
         self.assertEqual(size, 4)
 
+    def test_default_value_missing(self):
+        field = Timestamp()
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+        field = Timestamp(default=dt)
+        self.assertEqual(field.get_default(), dt)
+
 
 class TestDuration(unittest.TestCase):
     def test_wrapping(self):
@@ -231,3 +242,13 @@ class TestDuration(unittest.TestCase):
 
         # Duration uses Float(size=4)
         self.assertEqual(size, 4)
+
+    def test_default_value_missing(self):
+        field = Duration()
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        duration = timedelta(hours=1, minutes=30, seconds=45)
+        field = Duration(default=duration)
+        self.assertEqual(field.get_default(), duration)

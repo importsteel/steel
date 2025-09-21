@@ -1,15 +1,25 @@
 from enum import Enum, Flag, IntEnum, StrEnum
+from typing import Unpack
 
 from ..types import ValidationError
-from .base import Field, WrappedField
+from .base import BaseParams, Field, WrappedField
 from .numbers import Integer
 
 
-class EnumField[T: Enum, D](WrappedField[T, D]):
-    wrapped_field: Field[D]
-    enum_class: type[T]
+class EnumFieldParams[T](BaseParams[T]):
+    pass
 
-    def __init__(self, enum_class: type[T]):
+
+class EnumField[T: Enum, D](WrappedField[T, D]):
+    enum_class: type[T]
+    wrapped_field: Field[D]
+
+    def __init__(
+        self,
+        enum_class: type[T],
+        **kwargs: Unpack[BaseParams[T]],
+    ):
+        super().__init__(**kwargs)
         self.enum_class = enum_class
 
     def validate(self, value: T) -> None:
@@ -25,19 +35,31 @@ class EnumField[T: Enum, D](WrappedField[T, D]):
         return data_value
 
 
+class IntegerEnumParams(BaseParams[IntEnum]):
+    pass
+
+
 class IntegerEnum(EnumField[IntEnum, int]):
     wrapped_field: Field[int] = Integer(size=1)
+
+
+class StringEnumParams(BaseParams[StrEnum]):
+    pass
 
 
 class StringEnum(EnumField[StrEnum, str]):
     wrapped_field: Field[str]
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        **kwargs: Unpack[BaseParams[StrEnum]],
+    ) -> None:
         try:
             self.wrapped_field
             self.enum_class
         except AttributeError:
             raise TypeError("StringEnum must be subclassed with wrapped_field and enum_class")
+        super().__init__(enum_class=self.enum_class, **kwargs)
 
 
 class Flags(EnumField[Flag, int]):

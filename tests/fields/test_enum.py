@@ -4,7 +4,7 @@ from io import BytesIO
 
 from steel.fields.enum import Flags, IntegerEnum, StringEnum
 from steel.fields.text import FixedLengthString
-from steel.types import ValidationError
+from steel.types import ConfigurationError, ValidationError
 
 
 class ByteOrder(IntEnum):
@@ -75,6 +75,15 @@ class TestIntegerEnum(unittest.TestCase):
         # IntegerEnum uses Integer(size=1) by default
         self.assertEqual(size, 1)
 
+    def test_default_value_missing(self):
+        field = IntegerEnum(ByteOrder)
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = IntegerEnum(ByteOrder, default=ByteOrder.BIG_ENDIAN)
+        self.assertEqual(field.get_default(), ByteOrder.BIG_ENDIAN)
+
 
 class TestStringEnum(unittest.TestCase):
     def setUp(self):
@@ -138,6 +147,23 @@ class TestStringEnum(unittest.TestCase):
         size, cache = self.field.get_size(BytesIO())
 
         self.assertEqual(size, 3)
+
+    def test_default_value_missing(self):
+        class StatusField(StringEnum):
+            enum_class = Status
+            wrapped_field = FixedLengthString(size=8, encoding="ascii")
+
+        field = StatusField()
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        class StatusField(StringEnum):
+            enum_class = Status
+            wrapped_field = FixedLengthString(size=8, encoding="ascii")
+
+        field = StatusField(default=Status.ACTIVE)
+        self.assertEqual(field.get_default(), Status.ACTIVE)
 
 
 class TestFlags(unittest.TestCase):
@@ -203,3 +229,13 @@ class TestFlags(unittest.TestCase):
 
         # Flags uses Integer(size=1) by default
         self.assertEqual(size, 1)
+
+    def test_default_value_missing(self):
+        field = Flags(Permission)
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        all_perms = Permission.READ | Permission.WRITE | Permission.EXECUTE
+        field = Flags(Permission, default=all_perms)
+        self.assertEqual(field.get_default(), all_perms)

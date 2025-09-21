@@ -1,27 +1,36 @@
 import struct
-from typing import Literal
+from typing import Literal, NotRequired, Unpack
 
 from ..types import ValidationError
-from .base import ExplicitlySizedField, Option
+from .base import BaseParams, ExplicitlySizedField, Option
 
 INTEGER_FORMATS = {1: "B", 2: "H", 4: "I", 8: "Q"}
 FLOAT_FORMATS = {2: "e", 4: "f", 8: "d"}
 
 
+type Endianness = Literal["<", ">"]
+
+
+class IntegerParams(BaseParams[int]):
+    signed: NotRequired[bool]
+    endianness: NotRequired[Endianness]
+
+
 class Integer(ExplicitlySizedField[int]):
     signed: bool
-    endianness: Option[str]
+    endianness: Option[Endianness]
 
     format: str
 
     def __init__(
         self,
-        size: Literal[1, 2, 4, 8],
         *,
+        size: Literal[1, 2, 4, 8],
         signed: bool = False,
-        endianness: Literal["<", ">"] = "<",
+        endianness: Endianness = "<",
+        **kwargs: Unpack[BaseParams[int]],
     ):
-        super().__init__(size=size)
+        super().__init__(size=size, **kwargs)
         self.signed = signed
         self.endianness = endianness
         format = INTEGER_FORMATS[self.size]
@@ -52,9 +61,18 @@ class Integer(ExplicitlySizedField[int]):
         return struct.pack(self.format, value)
 
 
+class FloatParams(BaseParams[float]):
+    pass
+
+
 class Float(ExplicitlySizedField[float]):
-    def __init__(self, size: Literal[2, 4, 8] = 4):
-        super().__init__(size=size)
+    def __init__(
+        self,
+        *,
+        size: Literal[2, 4, 8] = 4,
+        **kwargs: Unpack[BaseParams[float]],
+    ):
+        super().__init__(size=size, **kwargs)
         self.format = FLOAT_FORMATS[size]
 
     def validate(self, value: float) -> None:

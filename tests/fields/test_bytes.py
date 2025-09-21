@@ -2,7 +2,7 @@ import unittest
 from io import BytesIO
 
 from steel.fields.bytes import Bytes, FixedBytes
-from steel.types import ValidationError
+from steel.types import ConfigurationError, ValidationError
 
 
 class TestBytes(unittest.TestCase):
@@ -77,6 +77,22 @@ class TestBytes(unittest.TestCase):
         field.validate(b"")
         self.assertEqual(field.pack(b""), b"")
         self.assertEqual(field.unpack(b""), b"")
+
+    def test_default_value_missing(self):
+        field = Bytes(size=4)
+        with self.assertRaises(ConfigurationError):
+            field.get_default()
+
+    def test_default_value_provided(self):
+        field = Bytes(size=4, default=b"\x00\x01\x02\x03")
+        self.assertEqual(field.get_default(), b"\x00\x01\x02\x03")
+
+    def test_default_value_different_sizes(self):
+        field1 = Bytes(size=1, default=b"\xff")
+        self.assertEqual(field1.get_default(), b"\xff")
+
+        field8 = Bytes(size=8, default=b"\x00\x01\x02\x03\x04\x05\x06\x07")
+        self.assertEqual(field8.get_default(), b"\x00\x01\x02\x03\x04\x05\x06\x07")
 
 
 class TestFixedBytes(unittest.TestCase):
@@ -184,3 +200,25 @@ class TestFixedBytes(unittest.TestCase):
 
         with self.assertRaises(ValidationError):
             field.validate(b"\x00" * 99)
+
+    def test_default_value_automatic(self):
+        # FixedBytes automatically provides its value as the default
+        field = FixedBytes(b"\x00\x01\x02\x03")
+        self.assertEqual(field.get_default(), b"\x00\x01\x02\x03")
+
+    def test_default_value_empty_fixed(self):
+        field = FixedBytes(b"")
+        self.assertEqual(field.get_default(), b"")
+
+    def test_default_value_various_patterns(self):
+        # Test magic numbers
+        magic_field = FixedBytes(b"MAGIC")
+        self.assertEqual(magic_field.get_default(), b"MAGIC")
+
+        # Test null terminators
+        null_field = FixedBytes(b"\x00")
+        self.assertEqual(null_field.get_default(), b"\x00")
+
+        # Test specific byte patterns
+        pattern_field = FixedBytes(b"\xde\xad\xbe\xef")
+        self.assertEqual(pattern_field.get_default(), b"\xde\xad\xbe\xef")

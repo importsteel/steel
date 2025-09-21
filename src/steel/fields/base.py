@@ -1,17 +1,35 @@
 from abc import abstractmethod
 from io import BufferedIOBase
 from types import GenericAlias
-from typing import Any, Generator, Optional, Self, TypeAliasType, overload
+from typing import (
+    Any,
+    Generator,
+    NotRequired,
+    Optional,
+    Self,
+    TypeAliasType,
+    TypedDict,
+    Unpack,
+    overload,
+)
 
 from ..base import Structure
-from ..types import ConfigurationError, FieldType
+from ..types import ConfigurationError, FieldType, SentinelValue
 
 # This type can be used to identify field options that can be overriden
 # at the class level.
 type Option[T] = T
 
+NoDefault = SentinelValue()
+
+
+class BaseParams[T](TypedDict):
+    default: NotRequired[T | SentinelValue]
+
 
 class Field[T, D = None](FieldType[T, D]):
+    default: T | SentinelValue = NoDefault
+
     @classmethod
     def __init_subclass__(cls: type["Field[T, D]"]) -> None:
         super.__init_subclass__()
@@ -21,6 +39,9 @@ class Field[T, D = None](FieldType[T, D]):
         obj: Self = super().__new__(cls)
         obj.specified_options = kwargs
         return obj
+
+    def __init__(self, default: T | SentinelValue = NoDefault):
+        self.default = default
 
     def __set_name__(self, owner: type, name: str) -> None:
         self.name = name
@@ -84,7 +105,9 @@ class Field[T, D = None](FieldType[T, D]):
         instance.__dict__[self.name] = value
 
     def get_default(self) -> T:
-        raise ConfigurationError("No default value available")
+        if isinstance(self.default, SentinelValue):
+            raise ConfigurationError("No default value available")
+        return self.default
 
     @abstractmethod
     def validate(self, value: T) -> None:
@@ -114,7 +137,8 @@ class Field[T, D = None](FieldType[T, D]):
 class ExplicitlySizedField[T](Field[T]):
     size: int
 
-    def __init__(self, /, size: int):
+    def __init__(self, /, size: int, **kwargs: Unpack[BaseParams[T]]):
+        super().__init__(**kwargs)
         self.size = size
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, None]:

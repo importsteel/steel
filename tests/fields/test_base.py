@@ -45,6 +45,18 @@ class TestFieldDescriptor(unittest.TestCase):
         instance.value = 30
         self.assertIsInstance(instance.value, int)
 
+    def test_multiple_access(self):
+        # Test that the field does *not* get returned if an instance value is set
+        instance = Example(10)
+        instance.value = 30
+        self.assertIsInstance(instance.value, int)
+
+        value = instance.value
+        value = instance.value
+        value = instance.value
+        value = instance.value
+        self.assertIsInstance(value, int)
+
 
 class ConversionBehavior(unittest.TestCase):
     def test_data_field_property(self):

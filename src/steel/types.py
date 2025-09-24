@@ -1,14 +1,12 @@
 from io import BufferedIOBase
 from typing import Any, Callable, ClassVar
 
-type SizeLookup = Callable[[BufferedIOBase], tuple[int, Any]]
-
 
 class FieldType[T, D]:
     name: str
     all_options: ClassVar[dict[str, Any]]
     specified_options: dict[str, Any]
-    size: int | SizeLookup
+    size: "int | SizeLookup | FieldType[Any, Any]"
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, Any]:
         raise NotImplementedError()
@@ -16,7 +14,7 @@ class FieldType[T, D]:
     def validate(self, value: Any) -> None:
         pass
 
-    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+    def read(self, buffer: BufferedIOBase, cache: Any = None) -> tuple[T, int]:
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:
@@ -43,3 +41,21 @@ class ValidationError(RuntimeError):
 
 class SentinelValue:
     pass
+
+
+class SizeLookup:
+    __slots__ = ["field", "func"]
+
+    field: AnyField
+    func: Callable[[BufferedIOBase], tuple[int, Any]]
+
+    def __init__(self, field: AnyField, func: Callable[[BufferedIOBase], tuple[int, Any]]) -> None:
+        self.field = field
+        self.func = func
+
+    def __call__(self, buffer: BufferedIOBase) -> tuple[int, Any]:
+        return self.func(buffer)
+
+    @property
+    def name(self) -> str:
+        return self.field.name

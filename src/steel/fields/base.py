@@ -108,7 +108,7 @@ class Field[T, D = None](FieldType[T, D]):
         raise NotImplementedError()
 
     @abstractmethod
-    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+    def read(self, buffer: BufferedIOBase, cache: Any = None) -> tuple[T, int]:
         raise NotImplementedError()
 
     @abstractmethod
@@ -135,7 +135,7 @@ class ExplicitlySizedField[T](Field[T]):
         super().__init__(**kwargs)
         self.size = size
 
-    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+    def read(self, buffer: BufferedIOBase, cache: None = None) -> tuple[T, int]:
         packed = buffer.read(self.size)
         return self.unpack(packed), len(packed)
 
@@ -156,9 +156,9 @@ class WrappedField[T, D](Field[T]):
     def validate(self, value: T) -> None:
         raise NotImplementedError()
 
-    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+    def read(self, buffer: BufferedIOBase, cache: Any = None) -> tuple[T, int]:
         field = self.get_wrapped_field()
-        value, size = field.read(buffer)
+        value, size = field.read(buffer, cache)
         return self.wrap(value), size
 
     @abstractmethod

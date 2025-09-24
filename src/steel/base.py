@@ -12,7 +12,7 @@ class FieldDict(dict[str, AnyField]): ...
 class Configuration:
     fields: FieldDict
     options: dict[str, Any]
-    offsets: dict[str, list[int | SizeLookup]]
+    offsets: dict[str, list[int | SizeLookup | AnyField]]
 
     def __init__(self, options: dict[str, Any]) -> None:
         self.fields = FieldDict()
@@ -27,7 +27,7 @@ class Configuration:
 
     def create_offset_chains(self) -> None:
         current_offset = 0
-        structure_chain: list[int | SizeLookup] = []
+        structure_chain: list[int | SizeLookup | AnyField] = []
 
         for name, field in self.fields.items():
             self.offsets[name] = field_offset = structure_chain.copy()
@@ -35,7 +35,10 @@ class Configuration:
             if not structure_chain or current_offset > 0:
                 field_offset.append(current_offset)
 
-            if callable(field.size):
+            if isinstance(field.size, FieldType):
+                # TODO: Handle field references
+                pass
+            elif isinstance(field.size, SizeLookup):
                 if current_offset > 0:
                     structure_chain.append(current_offset)
                 structure_chain.append(field.size)
@@ -47,38 +50,57 @@ class Configuration:
         return State(buffer, self)
 
 
-class FieldState:
-    __slots__ = ["field", "offset_chain", "size", "cache"]
-
-    field: AnyField
-    offset: int | None
-    size: int | None
-    cache: Any
-
-    def __init__(self, field: AnyField, /) -> None:
-        self.field = field
-
-
-class State(dict[str, FieldState]):
+class State:
     buffer: BufferedIOBase
     config: Configuration
+    cache: dict[str, Any]
+    offsets: dict[str, int]
+    sizes: dict[str, int]
 
     def __init__(self, buffer: BufferedIOBase, config: Configuration) -> None:
         self.buffer = buffer
         self.config = config
+        self.cache = {}
+        self.offsets = {}
+        self.sizes = {}
 
     def get_offset(self, field_name: str) -> int:
-        print(self.config.offsets[field_name])
+        if field_name in self.offsets:
+            return self.offsets[field_name]
+
         offset = 0
         for step in self.config.offsets[field_name]:
             self.buffer.seek(offset)
-            if callable(step):
+            if isinstance(step, FieldType):
+                # TODO: Handle field references
+                pass
+            elif isinstance(step, SizeLookup):
+                # FIXME: This could handle some cleanup and comments
+                if step.name in self.sizes:
+                    offset += self.sizes[step.name]
+                    continue
                 size, cache = step(self.buffer)
-                print(size, cache)
+                self.sizes[step.name] = size
                 offset += size
+                self.cache[step.name] = cache
             else:
                 offset += step
+
+        self.offsets[field_name] = offset
         return offset
+
+    def get_value(self, field_name: str) -> Any:
+        # FIXME: This could handle some cleanup and comments
+        if field_name in self.offsets:
+            offset = self.offsets[field_name]
+        else:
+            self.offsets[field_name] = offset = self.get_offset(field_name)
+        self.buffer.seek(offset)
+
+        cache = self.cache.get(field_name)
+        value, size = self.config[field_name].read(self.buffer, cache=cache)
+        self.sizes[field_name] = size
+        return value
 
 
 class Structure:

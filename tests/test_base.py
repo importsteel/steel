@@ -8,6 +8,17 @@ from steel.fields.text import FixedLengthString, LengthIndexedString, Terminated
 from steel.types import ValidationError
 
 
+class ReadTracker(BytesIO):
+    bytes_read: int = 0
+
+    def read(self, size: int | None = None) -> bytes:
+        if size is not None:
+            self.bytes_read += size
+        output = super().read(size)
+        # print("output", output)
+        return output
+
+
 class TestStructureConfiguration(unittest.TestCase):
     def test_configuration_exists(self):
         class Example(Structure):
@@ -227,7 +238,6 @@ class TestStructureValidation(unittest.TestCase):
     def test_validate_all_fields_valid(self):
         """Test validation passes when all fields are valid."""
         instance = self.SimpleStructure(number=100, text="hello")
-        print(instance)
         # Should not raise any exception
         instance.validate()
 
@@ -372,7 +382,7 @@ class TestOffsetChains(unittest.TestCase):
             b = Integer(size=1)
 
         self.assertEqual(Example._config.offsets["a"], [0])
-        self.assertEqual(Example._config.offsets["b"], [Example.a.get_size])
+        self.assertEqual(Example._config.offsets["b"], [Example.a.size])
 
     def test_mixed_offsets(self):
         class Example(Structure):
@@ -394,23 +404,23 @@ class TestOffsetChains(unittest.TestCase):
         )
         self.assertEqual(
             Example._config.offsets["c"],
-            [2, Example.b.get_size],
+            [2, Example.b.size],
         )
         self.assertEqual(
             Example._config.offsets["d"],
-            [2, Example.b.get_size, 4],
+            [2, Example.b.size, 4],
         )
         self.assertEqual(
             Example._config.offsets["e"],
-            [2, Example.b.get_size, 6],
+            [2, Example.b.size, 6],
         )
         self.assertEqual(
             Example._config.offsets["f"],
-            [2, Example.b.get_size, 6, Example.e.get_size],
+            [2, Example.b.size, 6, Example.e.size],
         )
         self.assertEqual(
             Example._config.offsets["g"],
-            [2, Example.b.get_size, 6, Example.e.get_size, 2],
+            [2, Example.b.size, 6, Example.e.size, 2],
         )
 
 
@@ -421,7 +431,7 @@ class TestOffsetCalculations(unittest.TestCase):
             b = Integer(size=2)
             c = Integer(size=4)
 
-        example = Example(BytesIO(b"\x01\x02\x00\x04\x00\x00\x00"))
+        example = Example(BytesIO(b"\x01\x02\x00\x03\x00\x00\x00"))
 
         self.assertEqual(example._state.get_offset("a"), 0)
         self.assertEqual(example._state.get_offset("b"), 1)
@@ -461,3 +471,136 @@ class TestOffsetCalculations(unittest.TestCase):
         self.assertEqual(example._state.get_offset("e"), 11)
         self.assertEqual(example._state.get_offset("f"), 23)
         self.assertEqual(example._state.get_offset("g"), 24)
+
+
+class TestRandomAccess(unittest.TestCase):
+    def test_explicit_offsets(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = Integer(size=2)
+            c = Integer(size=4)
+
+        example = Example(BytesIO(b"\x01\x02\x00\x03\x00\x00\x00"))
+
+        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(example._state.get_value("b"), 2)
+        self.assertEqual(example._state.get_value("c"), 3)
+
+    def test_variable_offsets(self):
+        class Example(Structure):
+            a = TerminatedString()
+            b = Integer(size=1)
+
+        example = Example(BytesIO(b"hello\x00\x01"))
+
+        self.assertEqual(example._state.get_value("a"), "hello")
+        self.assertEqual(example._state.get_value("b"), 1)
+
+        example = Example(BytesIO(b"hello world\x00\x01"))
+
+        self.assertEqual(example._state.get_value("a"), "hello world")
+        self.assertEqual(example._state.get_value("b"), 1)
+
+    def test_mixed_offsets(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = LengthIndexedString(size=Integer(size=1))
+            c = Integer(size=1)
+            d = Integer(size=1)
+            e = TerminatedString()
+            f = Integer(size=1)
+            g = Integer(size=1)
+
+        example = Example(BytesIO(b"\x01\x07example\x02\x03hello world\x00\x04\x05"))
+
+        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(example._state.get_value("b"), "example")
+        self.assertEqual(example._state.get_value("c"), 2)
+        self.assertEqual(example._state.get_value("d"), 3)
+        self.assertEqual(example._state.get_value("e"), "hello world")
+        self.assertEqual(example._state.get_value("f"), 4)
+        self.assertEqual(example._state.get_value("g"), 5)
+
+    def test_limited_reading(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = Integer(size=2)
+            c = Integer(size=4)
+
+        tracker = ReadTracker(b"\x01\x02\x00\x03\x00\x00\x00")
+
+        example = Example(tracker)
+        self.assertEqual(tracker.bytes_read, 0)
+
+        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(tracker.bytes_read, 1)
+
+        self.assertEqual(example._state.get_value("b"), 2)
+        self.assertEqual(tracker.bytes_read, 3)
+
+        self.assertEqual(example._state.get_value("c"), 3)
+        self.assertEqual(tracker.bytes_read, 7)
+
+    def test_limited_reading_with_variable_sizes(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = TerminatedString()
+            c = Integer(size=2)
+
+        tracker = ReadTracker(b"\x01hello world\x00\x02\x00")
+
+        example = Example(tracker)
+        self.assertEqual(tracker.bytes_read, 0)
+
+        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(tracker.bytes_read, 1)
+
+        self.assertEqual(example._state.get_value("b"), "hello world")
+        self.assertEqual(tracker.bytes_read, 13)
+
+        self.assertEqual(example._state.get_value("c"), 2)
+        self.assertEqual(tracker.bytes_read, 15)
+
+    def test_random_reading(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = Integer(size=2)
+            c = Integer(size=4)
+
+        tracker = ReadTracker(b"\x01\x02\x00\x03\x00\x00\x00")
+
+        example = Example(tracker)
+        self.assertEqual(tracker.bytes_read, 0)
+
+        self.assertEqual(example._state.get_value("c"), 3)
+        self.assertEqual(tracker.bytes_read, 4)
+
+        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(tracker.bytes_read, 5)
+
+        self.assertEqual(example._state.get_value("b"), 2)
+        self.assertEqual(tracker.bytes_read, 7)
+
+    def test_random_reading_with_variable_sizes(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = TerminatedString()
+            c = Integer(size=2)
+            d = Integer(size=2)
+
+        tracker = ReadTracker(b"\x01hello world\x00\x02\x00\x03\x00")
+
+        example = Example(tracker)
+        self.assertEqual(tracker.bytes_read, 0)
+
+        self.assertEqual(example._state.get_value("c"), 2)
+        self.assertEqual(tracker.bytes_read, 14)
+
+        self.assertEqual(example._state.get_value("d"), 3)
+        self.assertEqual(tracker.bytes_read, 16)
+
+        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(tracker.bytes_read, 17)
+
+        self.assertEqual(example._state.get_value("b"), "hello world")
+        self.assertEqual(tracker.bytes_read, 17)

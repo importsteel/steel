@@ -1,7 +1,7 @@
 from io import BufferedIOBase
 from typing import NotRequired, Unpack
 
-from ..types import ConfigurationError, ValidationError
+from ..types import ConfigurationError, SizeLookup, ValidationError
 from .base import BaseParams, Field, Option
 
 
@@ -63,7 +63,7 @@ class FixedLengthString(EncodedString):
         if len(packed_value) > self.size:
             raise ValidationError(f"{value} encodes to more than {self.size} characters")
 
-    def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
+    def read(self, buffer: BufferedIOBase, cache: None = None) -> tuple[str, int]:
         # Even though this matches the behavior of ExplicitlySizedField,
         # it's useful to define it here, to easily contrast it with the
         # other fields below.
@@ -89,7 +89,7 @@ class LengthIndexedString(EncodedString):
     ):
         super().__init__(**kwargs)
         self.size_field = size
-        self.size = self.get_size
+        self.size = SizeLookup(self, self.get_size)
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, int]:
         # Packing the text value will automatically account for the
@@ -98,7 +98,7 @@ class LengthIndexedString(EncodedString):
         text_size, size_size = self.size_field.read(buffer)
         return text_size + size_size, text_size
 
-    def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
+    def read(self, buffer: BufferedIOBase, cache: int | None = None) -> tuple[str, int]:
         # It would be easier to access the size field as `self.size_field`, but
         # when accessed as an attribute, its type hint also includes `int` as
         # a valid type, which doesn't have the necessary `read()` method.
@@ -140,13 +140,16 @@ class TerminatedString(EncodedString):
                 f"String terminator may only contain one byte; got {len(terminator)}"
             )
         self.terminator = terminator
-        self.size = self.get_size
+        self.size = SizeLookup(self, self.get_size)
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, str]:
         value, size = self.read(buffer)
         return size, value
 
-    def read(self, buffer: BufferedIOBase) -> tuple[str, int]:
+    def read(self, buffer: BufferedIOBase, cache: str | None = None) -> tuple[str, int]:
+        if cache is not None:
+            return cache, 0
+
         char = buffer.read(1)
         if char == b"":
             return "", 0

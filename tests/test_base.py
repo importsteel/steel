@@ -603,3 +603,31 @@ class TestRandomAccess(unittest.TestCase):
 
         self.assertEqual(example._state.get_value("b"), "hello world")
         self.assertEqual(tracker.bytes_read, 17)
+
+
+class TestStructureSize(unittest.TestCase):
+    def test_get_static_size(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = Integer(size=2)
+            c = Integer(size=4)
+
+        input = ReadTracker(b"\x01\x02\x00\x03\x00\x00\x00")
+
+        example = Example(input)
+
+        self.assertEqual(example.get_size(input), 7)
+        self.assertEqual(input.bytes_read, 0)
+
+    def test_get_variable_size(self):
+        class Example(Structure):
+            a = Integer(size=1)
+            b = LengthIndexedString(size=Integer(size=1))
+            c = TerminatedString()
+
+        input = ReadTracker(b"\x01\x05hello world\x00")
+
+        example = Example(input)
+
+        self.assertEqual(example.get_size(input), 14)
+        self.assertEqual(input.bytes_read, 8)

@@ -66,22 +66,25 @@ class State:
         offset = 0
         for step in self.config.offsets[field_name]:
             self.buffer.seek(offset)
-            if isinstance(step, FieldType):
-                # TODO: Handle field references
-                pass
-            elif isinstance(step, SizeLookup):
-                # FIXME: This could handle some cleanup and comments
-                if step.name in self.sizes:
-                    offset += self.sizes[step.name]
-                    continue
-                size, cache = step(self.buffer)
-                self.sizes[step.name] = size
-                offset += size
-                self.cache[step.name] = cache
-            else:
-                offset += step
-
+            size = self.get_size(step)
+            offset += size
         return offset
+
+    def get_size(self, step: int | SizeLookup | AnyField) -> int:
+        if isinstance(step, FieldType):
+            # TODO: Handle field references
+            return 0
+        elif isinstance(step, SizeLookup):
+            # FIXME: This could handle some cleanup and comments
+            if step.name in self.sizes:
+                return self.sizes[step.name]
+
+            size, cache = step(self.buffer)
+            self.sizes[step.name] = size
+            self.cache[step.name] = cache
+            return size
+
+        return step
 
     def get_value(self, field_name: str) -> Any:
         # FIXME: This could handle some cleanup and comments
@@ -126,6 +129,19 @@ class Structure:
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def get_size(self, buffer: BufferedIOBase) -> int:
+        for last_field in self._config.fields.values():
+            # Just a simple way to iterate over the values and only keep the last one,
+            # without having to store the whole sequence in a list
+            pass
+
+        last_offset = self._state.get_offset(last_field.name)
+        buffer.seek(last_offset)
+
+        last_size = self._state.get_size(last_field.size)
+
+        return last_offset + last_size
 
     def validate(self) -> None:
         for field in self.__class__._config.fields.values():

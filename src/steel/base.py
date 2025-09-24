@@ -54,20 +54,15 @@ class State:
     buffer: BufferedIOBase
     config: Configuration
     cache: dict[str, Any]
-    offsets: dict[str, int]
     sizes: dict[str, int]
 
     def __init__(self, buffer: BufferedIOBase, config: Configuration) -> None:
         self.buffer = buffer
         self.config = config
         self.cache = {}
-        self.offsets = {}
         self.sizes = {}
 
     def get_offset(self, field_name: str) -> int:
-        if field_name in self.offsets:
-            return self.offsets[field_name]
-
         offset = 0
         for step in self.config.offsets[field_name]:
             self.buffer.seek(offset)
@@ -86,15 +81,11 @@ class State:
             else:
                 offset += step
 
-        self.offsets[field_name] = offset
         return offset
 
     def get_value(self, field_name: str) -> Any:
         # FIXME: This could handle some cleanup and comments
-        if field_name in self.offsets:
-            offset = self.offsets[field_name]
-        else:
-            self.offsets[field_name] = offset = self.get_offset(field_name)
+        offset = self.get_offset(field_name)
         self.buffer.seek(offset)
 
         cache = self.cache.get(field_name)

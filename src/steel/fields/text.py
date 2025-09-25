@@ -152,11 +152,8 @@ class TerminatedString(EncodedString):
         return size, (bytes(encoded), size)
 
     def get_value(self, buffer: BufferedIOBase, cache: tuple[bytes, int]) -> str:
-        if cache is None:
-            size, encoded = self.get_size(buffer)
-        else:
-            encoded, size = cache
-            buffer.seek(size)
+        encoded, size = cache
+        buffer.seek(size)
 
         return self.unpack(encoded)
 

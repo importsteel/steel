@@ -52,9 +52,6 @@ class TestFieldDescriptor(unittest.TestCase):
         self.assertIsInstance(instance.value, int)
 
         value = instance.value
-        value = instance.value
-        value = instance.value
-        value = instance.value
         self.assertIsInstance(value, int)
 
 

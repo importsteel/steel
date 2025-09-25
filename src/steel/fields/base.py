@@ -78,9 +78,15 @@ class Field[T, D = None](FieldType[T, D]):
         if not isinstance(obj, Structure):
             return self
 
+        value: T
+
         try:
-            value: T = obj.__dict__[self.name]
+            value = obj.__dict__[self.name]
         except KeyError:
+            print("is_active", obj._state.is_active)
+            if obj._state.is_active:
+                value, size = obj._state.get_value(self.name)
+                return value
             try:
                 return self.get_default()
             except ConfigurationError:
@@ -108,16 +114,26 @@ class Field[T, D = None](FieldType[T, D]):
         raise NotImplementedError()
 
     @abstractmethod
-    def read(self, buffer: BufferedIOBase, cache: Any = None) -> tuple[T, int]:
-        raise NotImplementedError()
-
-    @abstractmethod
     def pack(self, value: T) -> bytes:
         raise NotImplementedError()
 
     @abstractmethod
     def unpack(self, value: bytes) -> T:
         raise NotImplementedError()
+
+    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
+        low = buffer.tell()
+        size, cache = self.get_size(buffer)
+
+        high = buffer.tell()
+
+        buffer.seek(low)
+        value = self.get_value(buffer, cache)
+
+        high = max(high, buffer.tell())
+
+        bytes_read = high - low
+        return value, bytes_read
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:
         # read() methods must all be different in order to know when the value
@@ -135,9 +151,12 @@ class ExplicitlySizedField[T](Field[T]):
         super().__init__(**kwargs)
         self.size = size
 
-    def read(self, buffer: BufferedIOBase, cache: None = None) -> tuple[T, int]:
+    def get_size(self, buffer: BufferedIOBase) -> tuple[int, None]:
+        return self.size, None
+
+    def get_value(self, buffer: BufferedIOBase, cache: None) -> T:
         packed = buffer.read(self.size)
-        return self.unpack(packed), len(packed)
+        return self.unpack(packed)
 
 
 class WrappedField[T, D](Field[T]):
@@ -156,10 +175,14 @@ class WrappedField[T, D](Field[T]):
     def validate(self, value: T) -> None:
         raise NotImplementedError()
 
-    def read(self, buffer: BufferedIOBase, cache: Any = None) -> tuple[T, int]:
+    def get_size(self, buffer: BufferedIOBase) -> tuple[int, Any]:
         field = self.get_wrapped_field()
-        value, size = field.read(buffer, cache)
-        return self.wrap(value), size
+        return field.get_size(buffer)
+
+    def get_value(self, buffer: BufferedIOBase, cache: Any) -> T:
+        field = self.get_wrapped_field()
+        value = field.get_value(buffer, cache)
+        return self.wrap(value)
 
     @abstractmethod
     def wrap(self, value: D) -> T:

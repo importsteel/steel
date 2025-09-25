@@ -56,11 +56,14 @@ class State:
     cache: dict[str, Any]
     sizes: dict[str, int]
 
+    is_active: bool
+
     def __init__(self, buffer: BufferedIOBase, config: Configuration) -> None:
         self.buffer = buffer
         self.config = config
         self.cache = {}
         self.sizes = {}
+        self.is_active = True
 
     def get_offset(self, field_name: str) -> int:
         offset = 0
@@ -91,10 +94,17 @@ class State:
         offset = self.get_offset(field_name)
         self.buffer.seek(offset)
 
-        cache = self.cache.get(field_name)
-        value, size = self.config[field_name].read(self.buffer, cache=cache)
-        self.sizes[field_name] = size
-        return value
+        if field_name not in self.cache:
+            field = self.config.fields[field_name]
+            position = self.buffer.tell()
+            size, cache = field.get_size(self.buffer)
+            self.buffer.seek(position)
+            self.sizes[field_name] = size
+            self.cache[field_name] = cache
+        cache = self.cache[field_name]
+
+        value = self.config[field_name].get_value(self.buffer, cache=cache)
+        return value, self.sizes[field_name]
 
 
 class Structure:
@@ -123,7 +133,10 @@ class Structure:
         cls._config.create_offset_chains()
 
     def __init__(self, buffer: BufferedIOBase | None = None, /, **kwargs: Any) -> None:
-        if buffer:
+        if buffer is None:
+            self._state = self._config.create_state(BytesIO())
+            self._state.is_active = False
+        else:
             self._state = self._config.create_state(buffer)
 
         # FIXME: This needs to be *a lot* smarter, but it proves the basic idea for now
@@ -152,10 +165,10 @@ class Structure:
 
     @classmethod
     def load(cls: type[T], buffer: BufferedIOBase) -> T:
-        data = {}
+        instance = cls(buffer)
         for field in cls._config.fields.values():
-            data[field.name], size = field.read(buffer)
-        return cls(**data)
+            instance.__dict__[field.name], size = field.read(buffer)
+        return instance
 
     @classmethod
     def loads(cls: type[T], value: bytes) -> T:

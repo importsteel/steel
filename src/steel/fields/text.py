@@ -1,4 +1,4 @@
-from io import BufferedIOBase
+from io import SEEK_CUR, BufferedIOBase
 from typing import NotRequired, Unpack
 
 from ..types import ConfigurationError, SizeLookup, ValidationError
@@ -63,12 +63,12 @@ class FixedLengthString(EncodedString):
         if len(packed_value) > self.size:
             raise ValidationError(f"{value} encodes to more than {self.size} characters")
 
-    def read(self, buffer: BufferedIOBase, cache: None = None) -> tuple[str, int]:
-        # Even though this matches the behavior of ExplicitlySizedField,
-        # it's useful to define it here, to easily contrast it with the
-        # other fields below.
+    def get_size(self, buffer: BufferedIOBase, cache: None = None) -> tuple[int, None]:
+        return self.size, None
+
+    def get_value(self, buffer: BufferedIOBase, cache: None) -> str:
         encoded = buffer.read(self.size)
-        return self.unpack(encoded), len(encoded)
+        return self.unpack(encoded)
 
 
 class LengthIndexedStringParams(EncodedStringParams):
@@ -91,26 +91,18 @@ class LengthIndexedString(EncodedString):
         self.size_field = size
         self.size = SizeLookup(self, self.get_size)
 
-    def get_size(self, buffer: BufferedIOBase) -> tuple[int, int]:
+    def get_size(self, buffer: BufferedIOBase) -> tuple[int, tuple[int, int]]:
         # Packing the text value will automatically account for the
         # addition of the length field.
         # FIXME: Might be worth a different API to make this more efficient
         text_size, size_size = self.size_field.read(buffer)
-        return text_size + size_size, text_size
+        return size_size + text_size, (text_size, size_size)
 
-    def read(self, buffer: BufferedIOBase, cache: int | None = None) -> tuple[str, int]:
-        # It would be easier to access the size field as `self.size_field`, but
-        # when accessed as an attribute, its type hint also includes `int` as
-        # a valid type, which doesn't have the necessary `read()` method.
-        # Accessing it via the instance dictionary bypasses the descriptor
-        # that adds the `int` return type. But the values in `self.__dict__`
-        # are typed as `Any`, so this provides an explicit hint about what
-        # type of object that's expected here.
-        size_field: Field[int] = self.__dict__["size_field"]
-
-        size, size_len = size_field.read(buffer)
-        encoded = buffer.read(size)
-        return self.unpack(encoded), size_len + len(encoded)
+    def get_value(self, buffer: BufferedIOBase, cache: tuple[int, int]) -> str:
+        text_size, size_size = cache
+        buffer.seek(size_size, SEEK_CUR)
+        encoded = buffer.read(text_size)
+        return self.unpack(encoded)
 
     def pack(self, value: str) -> bytes:
         size_field: Field[int] = self.__dict__["size_field"]
@@ -143,24 +135,25 @@ class TerminatedString(EncodedString):
         self.size = SizeLookup(self, self.get_size)
 
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, str]:
-        value, size = self.read(buffer)
-        return size, value
-
-    def read(self, buffer: BufferedIOBase, cache: str | None = None) -> tuple[str, int]:
-        if cache is not None:
-            return cache, 0
-
         char = buffer.read(1)
         if char == b"":
-            return "", 0
+            return 0, ""
 
-        value = bytearray()
+        encoded = bytearray()
         while char not in (b"", self.terminator):
-            value.append(char[0])
+            encoded.append(char[0])
             char = buffer.read(1)
 
-        encoded = bytes(value)
-        return self.unpack(encoded), len(encoded) + 1
+        value = self.unpack(bytes(encoded))
+
+        return len(encoded) + 1, value
+
+    def get_value(self, buffer: BufferedIOBase, cache: str) -> str:
+        if cache is not None:
+            return cache
+
+        size, value = self.get_size(buffer)
+        return value
 
     def pack(self, value: str) -> bytes:
         encoded = super().pack(value)

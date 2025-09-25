@@ -11,10 +11,13 @@ class FieldType[T, D]:
     def get_size(self, buffer: BufferedIOBase) -> tuple[int, Any]:
         raise NotImplementedError()
 
+    def get_value(self, buffer: BufferedIOBase, cache: Any) -> T:
+        raise NotImplementedError()
+
     def validate(self, value: Any) -> None:
         pass
 
-    def read(self, buffer: BufferedIOBase, cache: Any = None) -> tuple[T, int]:
+    def read(self, buffer: BufferedIOBase) -> tuple[T, int]:
         raise NotImplementedError()
 
     def write(self, value: T, buffer: BufferedIOBase) -> int:

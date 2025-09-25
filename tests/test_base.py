@@ -7,15 +7,7 @@ from steel.fields.numbers import Integer
 from steel.fields.text import FixedLengthString, LengthIndexedString, TerminatedString
 from steel.types import ValidationError
 
-
-class ReadTracker(BytesIO):
-    bytes_read: int = 0
-
-    def read(self, size: int | None = None) -> bytes:
-        output = super().read(size)
-        self.bytes_read += size or len(output)
-        # print("output", output)
-        return output
+from . import ReadTracker
 
 
 class TestStructureConfiguration(unittest.TestCase):
@@ -481,9 +473,9 @@ class TestRandomAccess(unittest.TestCase):
 
         example = Example(BytesIO(b"\x01\x02\x00\x03\x00\x00\x00"))
 
-        self.assertEqual(example._state.get_value("a"), 1)
-        self.assertEqual(example._state.get_value("b"), 2)
-        self.assertEqual(example._state.get_value("c"), 3)
+        self.assertEqual(example.a, 1)
+        self.assertEqual(example.b, 2)
+        self.assertEqual(example.c, 3)
 
     def test_variable_offsets(self):
         class Example(Structure):
@@ -492,13 +484,13 @@ class TestRandomAccess(unittest.TestCase):
 
         example = Example(BytesIO(b"hello\x00\x01"))
 
-        self.assertEqual(example._state.get_value("a"), "hello")
-        self.assertEqual(example._state.get_value("b"), 1)
+        self.assertEqual(example.a, "hello")
+        self.assertEqual(example.b, 1)
 
         example = Example(BytesIO(b"hello world\x00\x01"))
 
-        self.assertEqual(example._state.get_value("a"), "hello world")
-        self.assertEqual(example._state.get_value("b"), 1)
+        self.assertEqual(example.a, "hello world")
+        self.assertEqual(example.b, 1)
 
     def test_mixed_offsets(self):
         class Example(Structure):
@@ -512,13 +504,13 @@ class TestRandomAccess(unittest.TestCase):
 
         example = Example(BytesIO(b"\x01\x07example\x02\x03hello world\x00\x04\x05"))
 
-        self.assertEqual(example._state.get_value("a"), 1)
-        self.assertEqual(example._state.get_value("b"), "example")
-        self.assertEqual(example._state.get_value("c"), 2)
-        self.assertEqual(example._state.get_value("d"), 3)
-        self.assertEqual(example._state.get_value("e"), "hello world")
-        self.assertEqual(example._state.get_value("f"), 4)
-        self.assertEqual(example._state.get_value("g"), 5)
+        self.assertEqual(example.a, 1)
+        self.assertEqual(example.b, "example")
+        self.assertEqual(example.c, 2)
+        self.assertEqual(example.d, 3)
+        self.assertEqual(example.e, "hello world")
+        self.assertEqual(example.f, 4)
+        self.assertEqual(example.g, 5)
 
     def test_limited_reading(self):
         class Example(Structure):
@@ -531,13 +523,13 @@ class TestRandomAccess(unittest.TestCase):
         example = Example(tracker)
         self.assertEqual(tracker.bytes_read, 0)
 
-        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(example.a, 1)
         self.assertEqual(tracker.bytes_read, 1)
 
-        self.assertEqual(example._state.get_value("b"), 2)
+        self.assertEqual(example.b, 2)
         self.assertEqual(tracker.bytes_read, 3)
 
-        self.assertEqual(example._state.get_value("c"), 3)
+        self.assertEqual(example.c, 3)
         self.assertEqual(tracker.bytes_read, 7)
 
     def test_limited_reading_with_variable_sizes(self):
@@ -551,13 +543,13 @@ class TestRandomAccess(unittest.TestCase):
         example = Example(tracker)
         self.assertEqual(tracker.bytes_read, 0)
 
-        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(example.a, 1)
         self.assertEqual(tracker.bytes_read, 1)
 
-        self.assertEqual(example._state.get_value("b"), "hello world")
+        self.assertEqual(example.b, "hello world")
         self.assertEqual(tracker.bytes_read, 13)
 
-        self.assertEqual(example._state.get_value("c"), 2)
+        self.assertEqual(example.c, 2)
         self.assertEqual(tracker.bytes_read, 15)
 
     def test_random_reading(self):
@@ -571,13 +563,13 @@ class TestRandomAccess(unittest.TestCase):
         example = Example(tracker)
         self.assertEqual(tracker.bytes_read, 0)
 
-        self.assertEqual(example._state.get_value("c"), 3)
+        self.assertEqual(example.c, 3)
         self.assertEqual(tracker.bytes_read, 4)
 
-        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(example.a, 1)
         self.assertEqual(tracker.bytes_read, 5)
 
-        self.assertEqual(example._state.get_value("b"), 2)
+        self.assertEqual(example.b, 2)
         self.assertEqual(tracker.bytes_read, 7)
 
     def test_random_reading_with_variable_sizes(self):
@@ -592,16 +584,16 @@ class TestRandomAccess(unittest.TestCase):
         example = Example(tracker)
         self.assertEqual(tracker.bytes_read, 0)
 
-        self.assertEqual(example._state.get_value("c"), 2)
+        self.assertEqual(example.c, 2)
         self.assertEqual(tracker.bytes_read, 14)
 
-        self.assertEqual(example._state.get_value("d"), 3)
+        self.assertEqual(example.d, 3)
         self.assertEqual(tracker.bytes_read, 16)
 
-        self.assertEqual(example._state.get_value("a"), 1)
+        self.assertEqual(example.a, 1)
         self.assertEqual(tracker.bytes_read, 17)
 
-        self.assertEqual(example._state.get_value("b"), "hello world")
+        self.assertEqual(example.b, "hello world")
         self.assertEqual(tracker.bytes_read, 17)
 
 

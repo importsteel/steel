@@ -216,6 +216,14 @@ class TestTerminatedString(unittest.TestCase):
         self.assertEqual(value, "")
         self.assertEqual(bytes_read, 0)
 
+    def test_reading_missing_terminator(self):
+        field = TerminatedString(encoding="utf-8", terminator=b"\x00")
+
+        buffer = BytesIO(b"foo")
+        value, bytes_read = field.read(buffer)
+        self.assertEqual(value, "foo")
+        self.assertEqual(bytes_read, 3)
+
     def test_writing(self):
         field = TerminatedString(encoding="ascii")
 
@@ -230,12 +238,28 @@ class TestTerminatedString(unittest.TestCase):
     def test_get_size(self):
         field = TerminatedString(encoding="ascii")
 
-        # Test TerminatedString get_size returns minimum size (terminator)
-        size, cache = field.get_size(BytesIO(b"hello"))
+        size, cache = field.get_size(BytesIO(b"hello\x00"))
 
         # Size includes the terminator
         self.assertEqual(size, 6)
-        self.assertEqual(cache, "hello")
+        self.assertEqual(cache, (b"hello", 6))
+
+    def test_get_empty_size(self):
+        field = TerminatedString(encoding="ascii")
+
+        size, cache = field.get_size(BytesIO(b""))
+
+        self.assertEqual(size, 0)
+        self.assertEqual(cache, (b"", 0))
+
+    def test_get_size_missing_terminator(self):
+        field = TerminatedString(encoding="ascii")
+
+        size, cache = field.get_size(BytesIO(b"hello"))
+
+        # Size includes the terminator
+        self.assertEqual(size, 5)
+        self.assertEqual(cache, (b"hello", 5))
 
     def test_default_value_none(self):
         field = TerminatedString()

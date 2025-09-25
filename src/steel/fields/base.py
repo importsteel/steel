@@ -30,6 +30,7 @@ class BaseParams[T](TypedDict):
 class Field[T, D = None](FieldType[T, D]):
     default: T | SentinelValue = NoDefault
     size: int | SizeLookup
+    name: str
 
     @classmethod
     def __init_subclass__(cls: type["Field[T, D]"]) -> None:
@@ -43,6 +44,7 @@ class Field[T, D = None](FieldType[T, D]):
 
     def __init__(self, default: T | SentinelValue = NoDefault):
         self.default = default
+        self.name = "<anonymous>"
 
     def __set_name__(self, owner: type, name: str) -> None:
         self.name = name
@@ -83,7 +85,6 @@ class Field[T, D = None](FieldType[T, D]):
         try:
             value = obj.__dict__[self.name]
         except KeyError:
-            print("is_active", obj._state.is_active)
             if obj._state.is_active:
                 value, size = obj._state.get_value(self.name)
                 return value

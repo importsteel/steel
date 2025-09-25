@@ -134,26 +134,31 @@ class TerminatedString(EncodedString):
         self.terminator = terminator
         self.size = SizeLookup(self, self.get_size)
 
-    def get_size(self, buffer: BufferedIOBase) -> tuple[int, str]:
+    def get_size(self, buffer: BufferedIOBase) -> tuple[int, tuple[bytes, int]]:
         char = buffer.read(1)
         if char == b"":
-            return 0, ""
+            return 0, (b"", 0)
 
         encoded = bytearray()
         while char not in (b"", self.terminator):
             encoded.append(char[0])
             char = buffer.read(1)
 
-        value = self.unpack(bytes(encoded))
+        # `char` is either the terminator (if one was found)
+        # or an empty string (if the end of the stream was reached).
+        # So we use its length to determine how much was actually read.
+        size = len(encoded) + len(char)
 
-        return len(encoded) + 1, value
+        return size, (encoded, size)
 
-    def get_value(self, buffer: BufferedIOBase, cache: str) -> str:
-        if cache is not None:
-            return cache
+    def get_value(self, buffer: BufferedIOBase, cache: tuple[bytes, int]) -> str:
+        if cache is None:
+            size, encoded = self.get_size(buffer)
+        else:
+            encoded, size = cache
+            buffer.seek(size)
 
-        size, value = self.get_size(buffer)
-        return value
+        return self.unpack(bytes(encoded))
 
     def pack(self, value: str) -> bytes:
         encoded = super().pack(value)

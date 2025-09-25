@@ -149,7 +149,7 @@ class TerminatedString(EncodedString):
         # So we use its length to determine how much was actually read.
         size = len(encoded) + len(char)
 
-        return size, (encoded, size)
+        return size, (bytes(encoded), size)
 
     def get_value(self, buffer: BufferedIOBase, cache: tuple[bytes, int]) -> str:
         if cache is None:
@@ -158,7 +158,7 @@ class TerminatedString(EncodedString):
             encoded, size = cache
             buffer.seek(size)
 
-        return self.unpack(bytes(encoded))
+        return self.unpack(encoded)
 
     def pack(self, value: str) -> bytes:
         encoded = super().pack(value)
